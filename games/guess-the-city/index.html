@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>猜城记</title>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { 
+  width:100%; height:100%; 
+  overflow:hidden; 
+  font-family:'Noto Serif SC', serif; 
+  background:#0d0c0a; 
+  color:#e8dcc8;
+}
+
+#app { 
+  width:100%; max-width:430px; 
+  height:100vh; max-height:932px; 
+  margin:0 auto; 
+  position:relative; 
+  overflow:hidden; 
+  background:#0d0c0a; 
+}
+
+/* ==================== 走马灯选站界面 ==================== */
+#carousel-screen {
+  display:none;
+  height:100%;
+  position:relative;
+  overflow:hidden;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+#carousel-bg {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center;
+  z-index:1;
+  opacity:0.3;
+}
+
+#carousel-vignette {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+  z-index:2;
+  pointer-events:none;
+}
+
+#carousel-particles {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  z-index:2.5;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.particle {
+  position:absolute;
+  width:2px; height:2px;
+  background:#c9a96e;
+  border-radius:50%;
+  opacity:0;
+  animation:drift 14s infinite ease-in-out;
+}
+
+@keyframes drift {
+  0%   { transform:translateY(100vh) translateX(0); opacity:0; }
+  10%  { opacity:0.45; }
+  90%  { opacity:0.45; }
+  100% { transform:translateY(-10vh) translateX(20px); opacity:0; }
+}
+
+#carousel-band {
+  position:absolute;
+  top:0; bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:40%;
+  max-width:300px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,0,0,0.05) 15%,
+    rgba(0,0,0,0.35) 45%,
+    rgba(0,0,0,0.45) 50%,
+    rgba(0,0,0,0.35) 55%,
+    rgba(0,0,0,0.05) 85%,
+    transparent 100%
+  );
+  z-index:3;
+  pointer-events:none;
+}
+
+#carousel-track {
+  position:relative;
+  z-index:4;
+  width:100%;
+  height:220px;
+  margin:0 auto;
+}
+
+.carousel-card {
+  position:absolute;
+  top:50%;
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  width:64px;
+  height:150px;
+  padding:10px 6px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  border:1px solid rgba(201,169,110,0.3);
+  border-radius:4px;
+  background:rgba(13,12,10,0.65);
+  color:#c9a96e;
+  font-size:17px;
+  font-weight:500;
+  letter-spacing:2px;
+  line-height:1.8;
+  cursor:pointer;
+  transition:transform 0.08s linear,
+             opacity 0.08s linear,
+             box-shadow 0.08s linear,
+             border-color 0.08s linear;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  white-space:pre-wrap;
+}
+
+.carousel-card::before {
+  content:'';
+  position:absolute;
+  top:4px; left:30%; right:30%; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(201,169,110,0.3), transparent);
+}
+
+.carousel-card::after {
+  content:'';
+  position:absolute;
+  bottom:4px; left:30%; right:30%; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(201,169,110,0.3), transparent);
+}
+
+.carousel-card:hover {
+  border-color:#c9a96e;
+  box-shadow:0 0 16px rgba(201,169,110,0.2);
+}
+
+.carousel-card.center-card {
+  border-color:rgba(201,169,110,0.7);
+  box-shadow:0 0 24px rgba(201,169,110,0.25);
+}
+
+#carousel-hint {
+  position:relative;
+  z-index:5;
+  margin-top:32px;
+  color:rgba(201,169,110,0.45);
+  font-size:12px;
+  font-weight:300;
+  letter-spacing:4px;
+  text-align:center;
+  pointer-events:none;
+}
+
+@keyframes cardChosen {
+  0%   { filter:brightness(1); }
+  50%  { filter:brightness(2.2); border-color:#f5e6c8; }
+  100% { filter:brightness(1.4); border-color:#c9a96e; }
+}
+
+.card-chosen {
+  animation:cardChosen 0.7s ease-out forwards;
+}
+
+/* ==================== 猜谜界面 ==================== */
+#guess-screen {
+  display:none;
+  height:100%;
+  flex-direction:column;
+  position:relative;
+}
+
+/* 答题页背景层 */
+#guess-bg {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center;
+  z-index:0;
+  filter:brightness(0.35) contrast(1.1);
+}
+
+#guess-overlay {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:linear-gradient(180deg,
+    rgba(10,8,6,0.5) 0%,
+    rgba(10,8,6,0.3) 30%,
+    rgba(10,8,6,0.4) 70%,
+    rgba(10,8,6,0.6) 100%
+  );
+  z-index:1;
+}
+
+#guess-vignette {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.5) 100%);
+  z-index:2;
+  pointer-events:none;
+}
+
+.guess-header {
+  position:relative;
+  z-index:10;
+  text-align:center;
+  padding:50px 20px 18px;
+  border-bottom:1px solid rgba(201,169,110,0.12);
+  background:linear-gradient(180deg, rgba(10,8,6,0.55) 0%, rgba(10,8,6,0.2) 80%, transparent 100%);
+  backdrop-filter:blur(4px);
+}
+.btn-back {
+  position:absolute;
+  left:16px;
+  top:50px;
+  background:none;
+  border:1px solid rgba(201,169,110,0.18);
+  color:rgba(201,169,110,0.45);
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:12px;
+  cursor:pointer;
+  font-family:'Noto Serif SC', serif;
+}
+.guess-station {
+  font-size:12px;
+  color:rgba(155,140,124,0.55);
+  margin-bottom:4px;
+}
+.guess-progress {
+  font-size:12px;
+  color:rgba(201,169,110,0.45);
+}
+
+.guess-clue {
+  padding:30px 24px;
+  text-align:center;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  z-index:10;
+}
+.clue-type {
+  display:inline-block;
+  font-size:11px;
+  color:#c9a96e;
+  background:rgba(10,8,6,0.28);
+  padding:4px 12px;
+  border-radius:20px;
+  margin-bottom:20px;
+  backdrop-filter:blur(4px);
+}
+.clue-text {
+  font-size:16px;
+  color:#e8dcc8;
+  line-height:1.9;
+  background:rgba(10,8,6,0.22);
+  border:1px solid rgba(201,169,110,0.15);
+  border-radius:8px;
+  padding:20px;
+  backdrop-filter:blur(6px);
+}
+
+.guess-opts {
+  padding:0 24px 40px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  position:relative;
+  z-index:10;
+}
+
+.guess-opt {
+  background:rgba(10,8,6,0.28);
+  border:1px solid rgba(201,169,110,0.2);
+  border-radius:10px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  transition:all 0.2s;
+  color:#e8dcc8;
+  font-family:'Noto Serif SC', serif;
+  font-size:15px;
+  width:100%;
+  text-align:left;
+  border:none;
+  backdrop-filter:blur(6px);
+}
+.guess-opt:hover { border-color:#c9a96e; }
+/* ==================== 金墨晕染 & 金粉四散动画 ==================== */
+@keyframes goldInkSpread {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.guess-opt.correct {
+  border: 1px solid rgba(201,169,110,0.35) !important;
+  background: rgba(201,169,110,0.12) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.guess-opt.correct::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(201,169,110,0.4) 0%, rgba(201,169,110,0.1) 40%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: goldInkSpread 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.guess-opt.correct .opt-label {
+  background: rgba(201,169,110,0.4);
+  color: #f5e6c8;
+}
+
+.guess-opt.correct .opt-name {
+  color: #f5e6c8;
+}
+
+.guess-opt.wrong {
+  border: 1px solid rgba(201,169,110,0.1) !important;
+  background: rgba(10,8,6,0.4) !important;
+  opacity: 0.45;
+  position: relative;
+}
+
+.guess-opt.wrong::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: rgba(201,169,110,0.3);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.guess-opt:disabled { cursor:not-allowed; }
+
+/* 金粉四散粒子 */
+.gold-particle {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, #f5e6c8 0%, #c9a96e 40%, rgba(201,169,110,0) 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes goldBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+.opt-label {
+  display:inline-block;
+  width:24px;
+  height:24px;
+  line-height:24px;
+  text-align:center;
+  background:rgba(201,169,110,0.25);
+  color:#c9a96e;
+  border-radius:50%;
+  font-size:12px;
+  flex-shrink:0;
+}
+.opt-name { flex:1; }
+
+/* ==================== 城市卡片界面 ==================== */
+#card-screen {
+  display:none;
+  height:100%;
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+
+#card-screen::-webkit-scrollbar { width:0; }
+
+/* 城市卡片页背景层 */
+#card-bg {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center;
+  z-index:0;
+  filter:brightness(0.3) contrast(1.1);
+}
+
+#card-overlay {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:linear-gradient(180deg,
+    rgba(10,8,6,0.6) 0%,
+    rgba(10,8,6,0.4) 30%,
+    rgba(10,8,6,0.5) 70%,
+    rgba(10,8,6,0.7) 100%
+  );
+  z-index:1;
+}
+
+#card-vignette {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:radial-gradient(ellipse at center, transparent 15%, rgba(0,0,0,0.6) 100%);
+  z-index:2;
+  pointer-events:none;
+}
+
+#card-particles {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  z-index:3;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.card-header {
+  text-align:center;
+  padding:40px 20px 30px;
+  border-bottom:1px solid rgba(201,169,110,0.15);
+  position:relative;
+  z-index:10;
+  background:linear-gradient(180deg, rgba(10,8,6,0.4) 0%, transparent 100%);
+}
+
+.ornament {
+  font-size:12px;
+  letter-spacing:8px;
+  margin-bottom:12px;
+  color:rgba(201,169,110,0.6);
+}
+
+.cname {
+  font-size:36px;
+  font-weight:700;
+  letter-spacing:6px;
+  margin-bottom:8px;
+  color:#e8dcc8;
+  text-shadow:0 2px 8px rgba(0,0,0,0.5);
+}
+
+.csub {
+  font-size:12px;
+  letter-spacing:2px;
+  color:rgba(155,140,124,0.7);
+}
+
+.card-body {
+  padding:24px 20px;
+  position:relative;
+  z-index:10;
+  overflow-y:auto;
+}
+
+.cdesc {
+  font-size:14px;
+  line-height:1.8;
+  margin-bottom:28px;
+  background:rgba(10,8,6,0.25);
+  border:1px solid rgba(201,169,110,0.12);
+  border-radius:8px;
+  padding:16px;
+  backdrop-filter:blur(6px);
+  color:#e8dcc8;
+}
+
+.card-section {
+  margin-bottom:28px;
+}
+
+.sec-title {
+  font-size:13px;
+  letter-spacing:3px;
+  margin-bottom:12px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(201,169,110,0.15);
+  color:rgba(201,169,110,0.7);
+}
+
+.item-card {
+  background:rgba(10,8,6,0.28);
+  border:1px solid rgba(201,169,110,0.18);
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px;
+  backdrop-filter:blur(6px);
+}
+
+.item-name {
+  font-size:14px;
+  margin-bottom:4px;
+  color:#e8dcc8;
+}
+.item-desc {
+  font-size:12px;
+  line-height:1.6;
+}
+.card-foot {
+  padding:20px 24px 40px;
+  display:flex;
+  gap:12px;
+}
+.c-collect {
+  flex:1;
+  padding:14px;
+  border-radius:10px;
+  font-size:14px;
+  cursor:pointer;
+  font-family:'Noto Serif SC', serif;
+  border:2px solid;
+  transition:all 0.3s;
+}
+.c-collect:disabled {
+  opacity:0.5;
+  cursor:not-allowed;
+}
+.c-continue {
+  flex:1;
+  padding:14px;
+  border-radius:10px;
+  font-size:14px;
+  cursor:pointer;
+  font-family:'Noto Serif SC', serif;
+  background:transparent;
+  border:1px solid rgba(201,169,110,0.25);
+  color:#c9a96e;
+  transition:all 0.3s;
+}
+.c-continue:active { transform:scale(0.98); }
+
+/* 城市卡片页粒子效果 */
+#card-particles .particle {
+  position:absolute;
+  bottom:-20px;
+  width:3px;
+  height:3px;
+  background:radial-gradient(circle, #c9a96e 0%, rgba(201,169,110,0.4) 60%, transparent 100%);
+  border-radius:50%;
+  animation:cardParticleFloat 18s linear infinite;
+  opacity:0;
+}
+
+@keyframes cardParticleFloat {
+  0% {
+    transform:translateY(0) translateX(0);
+    opacity:0;
+  }
+  5% {
+    opacity:0.8;
+  }
+  90% {
+    opacity:0.6;
+  }
+  100% {
+    transform:translateY(-100vh) translateX(30px);
+    opacity:0;
+  }
+}
+
+.rise-anim {
+  animation:riseIn 0.4s ease-out both;
+}
+@keyframes riseIn {
+  from { opacity:0; transform:translateY(15px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* ==================== 通关文牒界面 ==================== */
+#complete-screen {
+  display:none;
+  height:100%;
+  background:#2a2418;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+#passport-container {
+  width:90%;
+  max-width:380px;
+  height:90%;
+  max-height:600px;
+  background:#f5e6c8;
+  border:3px double #8b4513;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  display:flex;
+  flex-direction:column;
+}
+
+#passport-content {
+  position:relative;
+  z-index:2;
+  padding:20px 15px;
+  height:100%;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+}
+
+#passport-content::-webkit-scrollbar {
+  width:0;
+}
+
+#passport-title {
+  text-align:center;
+  font-family:'Noto Serif SC',serif;
+  font-size:36px;
+  color:#8b4513;
+  letter-spacing:12px;
+  margin-bottom:12px;
+  text-shadow:1px 1px 2px rgba(139,69,19,0.3);
+}
+
+#passport-divider {
+  width:80%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#8b4513,transparent);
+  margin:0 auto 20px;
+}
+
+#passport-station {
+  text-align:center;
+  font-family:'Noto Serif SC',serif;
+  font-size:20px;
+  color:#654321;
+  letter-spacing:6px;
+  margin-bottom:22px;
+}
+
+#passport-cities-title {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:18px;
+  font-family:'Noto Serif SC',serif;
+  font-size:14px;
+  color:#8b4513;
+  letter-spacing:4px;
+}
+
+#passport-cities-title .line {
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#8b4513);
+}
+
+#passport-cities-title .line:last-child {
+  background:linear-gradient(90deg,#8b4513,transparent);
+}
+
+#passport-cities-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:22px;
+  flex:1;
+}
+
+.passport-city-item {
+  background:rgba(139,69,19,0.05);
+  border:1px solid rgba(139,69,19,0.15);
+  border-radius:6px;
+  padding:10px 8px;
+  text-align:center;
+  font-family:'Noto Serif SC',serif;
+  font-size:17px;
+  color:#654321;
+  letter-spacing:2px;
+}
+
+#passport-date {
+  text-align:center;
+  font-family:'Noto Serif SC',serif;
+  font-size:15px;
+  color:#8b4513;
+  letter-spacing:3px;
+  padding-top:15px;
+  border-top:1px solid rgba(139,69,19,0.2);
+  margin-top:auto;
+}
+
+#passport-footer {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  margin-top:15px;
+}
+
+#passport-footer .footer-line {
+  width:30px;
+  height:1px;
+  background:#8b4513;
+  opacity:0.4;
+}
+
+#passport-footer .footer-diamond {
+  font-size:12px;
+  color:#8b4513;
+  opacity:0.4;
+}
+
+#passport-game-name {
+  text-align:center;
+  font-family:'Noto Serif SC',serif;
+  font-size:13px;
+  color:#8b4513;
+  opacity:0.5;
+  letter-spacing:4px;
+  margin-top:10px;
+  padding-bottom:10px;
+}
+
+#passport-btn {
+  position:relative;
+  z-index:3;
+  margin:15px auto 20px;
+  display:block;
+  background:rgba(139,69,19,0.1);
+  border:1px solid #8b4513;
+  color:#8b4513;
+  padding:12px 32px;
+  border-radius:24px;
+  font-size:16px;
+  cursor:pointer;
+  font-family:'Noto Serif SC',serif;
+  transition:all 0.3s;
+}
+
+#passport-btn:active {
+  transform:scale(0.98);
+  background:rgba(139,69,19,0.2);
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ==================== 走马灯选站界面 ==================== -->
+  <div id="carousel-screen">
+    <img id="carousel-bg" src="opening_bg.jpg" alt="">
+    <div id="carousel-vignette"></div>
+    <div id="carousel-particles"></div>
+    <div id="carousel-band"></div>
+    <div id="carousel-track"></div>
+    <div id="carousel-hint">轻点卡片 · 开启一站</div>
+  </div>
+
+  <!-- ==================== 猜谜界面 ==================== -->
+  <div id="guess-screen">
+    <img id="guess-bg" src="" alt="">
+    <div id="guess-overlay"></div>
+    <div id="guess-vignette"></div>
+    <div class="guess-header">
+      <button class="btn-back" onclick="backToCarousel()">← 返回</button>
+      <div class="guess-station" id="guess-station">第1站 · 烟火初燃</div>
+      <div class="guess-progress" id="guess-progress">已猜 0/10</div>
+    </div>
+    <div class="guess-clue">
+      <div class="clue-type" id="clue-type">诗歌</div>
+      <div class="clue-text" id="clue-text">线索加载中...</div>
+    </div>
+    <div class="guess-opts" id="guess-opts"></div>
+  </div>
+
+  <!-- ==================== 城市卡片界面 ==================== -->
+  <div id="card-screen">
+    <img id="card-bg" src="" alt="">
+    <div id="card-overlay"></div>
+    <div id="card-vignette"></div>
+    <div id="card-particles"></div>
+    <div style="position:relative;z-index:10;flex:1;display:flex;flex-direction:column;overflow-y:auto;" id="card-scroll">
+      <div style="flex:1;padding:30px 24px 40px;" id="card-body"></div>
+      <div style="padding:20px 24px 40px;display:flex;gap:12px;" id="card-foot"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 通关文牒界面 ==================== -->
+  <div id="complete-screen">
+    <div id="passport-container">
+      <div id="passport-content">
+        <div id="passport-title">通关文牒</div>
+        <div id="passport-divider"></div>
+        <div id="passport-station"></div>
+        <div id="passport-cities-title">
+          <span class="line"></span>
+          <span>所集城池</span>
+          <span class="line"></span>
+        </div>
+        <div id="passport-cities-grid"></div>
+        <div id="passport-date"></div>
+        <div id="passport-footer">
+          <span class="footer-line"></span>
+          <span class="footer-diamond">◆</span>
+          <span class="footer-line"></span>
+        </div>
+        <div id="passport-game-name">猜城记</div>
+      </div>
+      <button id="passport-btn" onclick="nextAction()">继续探险</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="cities_data.js"></script>
+<script>
+// ==================== 21站数据 ====================
+const STATIONS = [
+  {id:1, name:'烟火初燃', icon:'🏮', desc:'人间烟火，最抚凡人心', kw:['自贡','乐山','台儿庄','阆中','安仁','开封','安阳','天水','武威','张掖']},
+  {id:2, name:'山中有人家', desc:'白云深处有人家', kw:['禾木','喀纳斯','亚丁','稻城','宏村','查济','武夷山','松阳','云和','毕棚沟']},
+  {id:3, name:'故纸风声', desc:'纸上得来终觉浅', kw:['敦煌','喀什','库车','莎车','若羌','民丰','和田','吐鲁番','哈密','天水']},
+  {id:4, name:'水过无声', desc:'静水流深', kw:['乌镇','西塘','婺源','瑞金','水富','威信','洞庭','太湖','衢州','开化']},
+  {id:5, name:'天宽地阔', desc:'天苍苍，野茫茫', kw:['德令哈','玉树','额济纳','阿拉善','呼伦贝尔','满洲里','门源','祁连','果洛','黄南']},
+  {id:6, name:'旧街灯下', desc:'夜市卖菱藕', kw:['凤凰','镇远','肇兴','荔波','赤水','恩施','利川','洪江','通道','边城']},
+  {id:7, name:'云深不知处', desc:'只在此山中', kw:['雅安','马边','庐山','井冈山','张家界','神农架','峨眉','乐山','恩施','利川']},
+  {id:8, name:'市集有声', desc:'市列珠玑', kw:['喀什','和田','丽江','大理','泉州','漳州','南靖','东山','平潭','伊宁']},
+  {id:9, name:'寒江独行', desc:'孤舟蓑笠翁', kw:['漠河','五大连池','阿尔山','长白山','珲春','敦化','延吉','集安','福贡','贡山']},
+  {id:10, name:'千年一梦', desc:'梦回千年', kw:['西安','洛阳','开封','南京','杭州','安阳','成都','武汉','荆州','武威']},
+  {id:11, name:'风从海上来', desc:'海风吹拂', kw:['青岛','烟台','普陀山','舟山','厦门','泉州','霞浦','潭门','福州','平潭']},
+  {id:12, name:'炉火正旺', desc:'炉火照天地', kw:['自贡','景德镇','佛山','唐山','邯郸','韩城','白银','靖远','铜川','宜宾']},
+  {id:13, name:'雨打芭蕉声', desc:'芭蕉叶上潇潇雨', kw:['成都','重庆','贵阳','昆明','广州','长沙','武汉','南昌','杭州','南京']},
+  {id:14, name:'石头记', desc:'石头城上', kw:['敦煌','拜城','库车','大同','洛阳','乐山','张掖','阿克塞','肃北','天水']},
+  {id:15, name:'残阳如血', desc:'大漠孤烟直', kw:['额济纳','敦煌','阳关','嘉峪关','山海关','哈密','阿克塞','肃北','玉门关','居延']},
+  {id:16, name:'路过人间', desc:'人间有味是清欢', kw:['成都','重庆','武汉','长沙','拉萨','日喀则','林芝','昌都','山南','那曲']},
+  {id:17, name:'半城旧事', desc:'雕栏玉砌应犹在', kw:['正定','蔚县','平遥','大同','张家口','代县','祁县','太谷','忻州','承德']},
+  {id:18, name:'酒旗风正美', desc:'水村山郭酒旗风', kw:['自贡','宜宾','泸州','绍兴','青岛','烟台','银川','武威','杏花村','即墨']},
+  {id:19, name:'时光慢城', desc:'从前的日色变得慢', kw:['大理','丽江','香格里拉','拉萨','苏州','杭州','扬州','镇江','泰州','嘉兴']},
+  {id:20, name:'四野无人', desc:'念天地之悠悠', kw:['漠河','可可西里','罗布泊','阿拉善','抚远','喀什','和田','阿里','那曲','玉树']},
+  {id:21, name:'此去经年', desc:'此去经年', kw:[]}
+];
+
+// ==================== 站点背景图映射 ====================
+const STATION_BG = {
+  1:'backgrounds_clean/烽火初燃.jpg',
+  2:'backgrounds_clean/山中有人家.jpg',
+  3:'backgrounds_clean/故纸风声.jpg',
+  4:'backgrounds_clean/水过无声.jpg',
+  5:'backgrounds_clean/天宽地阔.jpg',
+  6:'backgrounds_clean/旧街灯下.jpg',
+  7:'backgrounds_clean/云深不知处.jpg',
+  8:'backgrounds_clean/市集有声.jpg',
+  9:'backgrounds_clean/寒江独行.jpg',
+  10:'backgrounds_clean/千年一梦.jpg',
+  11:'backgrounds_clean/风从海上来.jpg',
+  12:'backgrounds_clean/炉火正旺.jpg',
+  13:'backgrounds_clean/雨打芭蕉声.jpg',
+  14:'backgrounds_clean/石头记.jpg',
+  15:'backgrounds_clean/残阳如血.jpg',
+  16:'backgrounds_clean/路过人间.jpg',
+  17:'backgrounds_clean/半城旧事.jpg',
+  18:'backgrounds_clean/酒旗风正美.jpg',
+  19:'backgrounds_clean/时光慢城.jpg',
+  20:'backgrounds_clean/四野无人.jpg',
+  21:'backgrounds_clean/此去经年.jpg',
+};
+
+// ==================== 走马灯用站名（含换行） ====================
+const CAROUSEL_NAMES = [
+  '烟火初燃','山中有\n人家','故纸风声','水过无声','天宽地阔','旧街灯下',
+  '云深不\n知处','市集有声','寒江独行','千年一梦','风从海\n上来','炉火正旺',
+  '雨打芭\n蕉声','石头记','残阳如血','路过人间','半城旧事','酒旗风\n正美',
+  '时光慢城','四野无人','此去经年'
+];
+
+// ==================== 状态 ====================
+let collected = JSON.parse(localStorage.getItem('mc_collected')||'[]');
+let currentStation = parseInt(localStorage.getItem('mc_station') || '1');
+let roundCities = [];
+let roundGuessed = [];
+let curCityIdx = -1;
+let curOptions = [];
+let isGuessing = false;
+
+// ==================== 走马灯状态 ====================
+let carouselCards = [];
+let carouselOffset = 0;
+let carouselSpeed = 0.15;
+let carouselAnimId = null;
+let carouselPaused = false;
+let carouselSelected = false;
+
+// ==================== 走马灯初始化 ====================
+function initCarousel() {
+  var particles = document.getElementById('carousel-particles');
+  for(var i=0;i<30;i++){
+    var p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.animationDelay=Math.random()*14+'s';
+    p.style.animationDuration=(7+Math.random()*8)+'s';
+    particles.appendChild(p);
+  }
+
+  var track = document.getElementById('carousel-track');
+  var TOTAL = CAROUSEL_NAMES.length;
+  var CARD_GAP = 72;
+  var TOTAL_WIDTH = TOTAL * CARD_GAP;
+
+  CAROUSEL_NAMES.forEach(function(name, i){
+    var card = document.createElement('div');
+    card.className = 'carousel-card';
+    card.textContent = name;
+    
+    (function(idx){
+      card.addEventListener('click', function(){ selectCarouselCard(idx); });
+      card.addEventListener('touchstart', function(e){
+        e.preventDefault();
+        selectCarouselCard(idx);
+      });
+    })(i);
+    
+    track.appendChild(card);
+    carouselCards.push({ el: card, stationId: i+1, index: i });
+  });
+
+  window._carouselTOTAL = TOTAL;
+  window._carouselGAP = CARD_GAP;
+  window._carouselTOTAL_WIDTH = TOTAL_WIDTH;
+}
+
+function renderCarouselFrame(){
+  var cw = window.innerWidth;
+  var halfW = cw / 2;
+  var TOTAL = window._carouselTOTAL;
+  var CARD_GAP = window._carouselGAP;
+  var TOTAL_WIDTH = window._carouselTOTAL_WIDTH;
+  var newCenter = -1;
+  var minDist = Infinity;
+
+  for(var i=0;i<TOTAL;i++){
+    var virtualX = ((i * CARD_GAP + carouselOffset) % TOTAL_WIDTH + TOTAL_WIDTH) % TOTAL_WIDTH;
+    
+    var halfTotal = TOTAL_WIDTH / 2;
+    var sx;
+    if(virtualX < halfTotal){
+      sx = virtualX;
+    } else {
+      sx = virtualX - TOTAL_WIDTH;
+    }
+
+    var absX = Math.abs(sx);
+    var screenX = halfW + sx;
+
+    var t = Math.min(absX / (halfW * 0.8), 1);
+    var scale = 1 - t * 0.25;
+    var opacity = 1 - t * 0.45;
+    var gold = 1 - t * 0.4;
+
+    var card = carouselCards[i];
+    card.el.style.transform = 'translate(-50%, -50%) translateX('+screenX+'px) scale('+scale+')';
+    card.el.style.opacity = opacity;
+
+    card.el.style.color = 'rgba(201,169,110,'+(0.15+gold*0.85)+')';
+    card.el.style.borderColor = 'rgba(201,169,110,'+(0.05+gold*0.55)+')';
+
+    if(absX < CARD_GAP * 0.6){
+      card.el.classList.add('center-card');
+    } else {
+      card.el.classList.remove('center-card');
+    }
+
+    if(absX < minDist){
+      minDist = absX;
+      newCenter = i;
+    }
+  }
+}
+
+function animateCarousel(){
+  if(!carouselPaused){
+    carouselOffset += carouselSpeed;
+  }
+  renderCarouselFrame();
+  carouselAnimId = requestAnimationFrame(animateCarousel);
+}
+
+function selectCarouselCard(index){
+  if(carouselSelected) return;
+  carouselSelected = true;
+  carouselPaused = true;
+
+  var stationId = carouselCards[index].stationId;
+  var station = STATIONS[stationId - 1];
+
+  // 高亮选中
+  carouselCards[index].el.classList.add('card-chosen');
+
+  // 其他卡片渐隐
+  carouselCards.forEach(function(c, i){
+    if(i !== index){
+      c.el.style.transition = 'opacity 0.5s ease-out';
+      c.el.style.opacity = '0.08';
+      c.el.style.pointerEvents = 'none';
+    }
+  });
+
+  var hint = document.getElementById('carousel-hint');
+  hint.textContent = '第'+stationId+'站 · '+station.name;
+
+  // 短暂延迟后进入答题
+  setTimeout(function(){
+    startStation(stationId);
+  }, 500);
+}
+
+function startCarousel(){
+  carouselOffset = 0;
+  carouselSelected = false;
+  carouselPaused = false;
+  
+  // 恢复所有卡片
+  carouselCards.forEach(function(c){
+    c.el.classList.remove('card-chosen');
+    c.el.style.transition = 'transform 0.08s linear, opacity 0.08s linear, box-shadow 0.08s linear, border-color 0.08s linear';
+    c.el.style.pointerEvents = 'auto';
+  });
+  document.getElementById('carousel-hint').textContent = '轻点卡片 · 开启一站';
+  
+  renderCarouselFrame();
+  if(!carouselAnimId){
+    carouselAnimId = requestAnimationFrame(animateCarousel);
+  }
+}
+
+function stopCarousel(){
+  carouselPaused = true;
+}
+
+// ==================== 初始化 ====================
+function init() {
+  initCarousel();
+  startCarousel();
+  showScreen('carousel-screen');
+}
+
+// ==================== 站选择 ====================
+function startStation(stationId) {
+  currentStation = stationId;
+  localStorage.setItem('mc_station', currentStation);
+  
+  const pool = getStationPool(stationId);
+  
+  const uniquePool = [...new Set(pool)];
+  const shuffled = [...uniquePool].sort(() => Math.random() - 0.5);
+  roundCities = shuffled.slice(0, 10);
+  
+  if (roundCities.length < 10) {
+    const allIds = DB.map(c => c.id).filter(id => !roundCities.includes(id));
+    const extra = allIds.sort(() => Math.random() - 0.5).slice(0, 10 - roundCities.length);
+    roundCities = roundCities.concat(extra);
+  }
+  
+  roundGuessed = [];
+  console.log('[startStation] Station', stationId, 'started. roundCities:', roundCities.length, 'cities');
+  
+  // 设置站点专属背景图
+  var bgEl = document.getElementById('guess-bg');
+  if(STATION_BG[stationId]){
+    bgEl.src = STATION_BG[stationId];
+    bgEl.style.display = '';
+    document.getElementById('guess-overlay').style.display = '';
+    document.getElementById('guess-vignette').style.display = '';
+  } else {
+    bgEl.style.display = 'none';
+    document.getElementById('guess-overlay').style.display = 'none';
+    document.getElementById('guess-vignette').style.display = 'none';
+  }
+  
+  showScreen('guess-screen');
+  nextQuestion();
+}
+
+function getStationPool(stationId) {
+  const station = STATIONS[stationId - 1];
+  const kw = station.kw;
+
+  if (!kw || kw.length === 0) {
+    const allIds = DB.map(c => c.id);
+    const shuffled = [...allIds].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(30, allIds.length));
+  }
+
+  const matched = new Set();
+  DB.forEach(c => {
+    const text = c.name + (c.desc||'') + (c.sub||'');
+    if (kw.some(k => text.includes(k))) {
+      matched.add(c.id);
+    }
+  });
+
+  let pool = Array.from(matched);
+
+  if (pool.length < 10) {
+    const allIds = DB.map(c => c.id).filter(id => !pool.includes(id));
+    const shuf = allIds.sort(() => Math.random() - 0.5);
+    const need = 10 - pool.length;
+    pool = pool.concat(shuf.slice(0, need));
+  }
+
+  const uniquePool = [...new Set(pool)];
+  return uniquePool;
+}
+
+// ==================== 城市卡片 ====================
+function showCard(idx) {
+  const c = DB[idx];
+  const scr = document.getElementById('card-screen');
+  
+  // 设置站点专属背景图
+  var bgEl = document.getElementById('card-bg');
+  if(STATION_BG[currentStation]){
+    bgEl.src = STATION_BG[currentStation];
+    bgEl.style.display = '';
+    document.getElementById('card-overlay').style.display = '';
+    document.getElementById('card-vignette').style.display = '';
+    document.getElementById('card-particles').style.display = '';
+  } else {
+    bgEl.style.display = 'none';
+    document.getElementById('card-overlay').style.display = 'none';
+    document.getElementById('card-vignette').style.display = 'none';
+    document.getElementById('card-particles').style.display = 'none';
+  }
+  
+  // 初始化粒子效果
+  initCardParticles();
+  
+  document.getElementById('card-body').innerHTML = `
+    <div class="card-header">
+      <div class="ornament">· · ·</div>
+      <div class="cname">${c.name}</div>
+      <div class="csub">${c.r} · ${c.sub}</div>
+    </div>
+    <div class="card-body">
+      <div class="cdesc">${c.desc}</div>
+      <div class="card-section">
+        <div class="sec-title">必游之地</div>
+        ${c.lm.map(l => `
+          <div class="item-card rise-anim">
+            <div class="item-name">${l.n}</div>
+            <div class="item-desc">${l.d}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="card-section">
+        <div class="sec-title">地道美食</div>
+        ${c.fd.map(f => `
+          <div class="item-card rise-anim">
+            <div class="item-name">${f.n}</div>
+            <div class="item-desc">${f.d}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  const already = collected.includes(c.id);
+  document.getElementById('card-foot').innerHTML = `
+    <button class="c-collect" style="background:${already ? c.c.a+'30' : c.c.a};color:${already ? c.c.a : c.c.b};border-color:${c.c.a};" ${already?'disabled':''}>${already?'已收入文牒':'盖章收入文牒'}</button>
+    <button class="c-continue" onclick="continueJourney()">继续猜谜</button>
+  `;
+  
+  showScreen('card-screen');
+  document.getElementById('card-scroll').scrollTop = 0;
+  
+  setTimeout(() => {
+    document.querySelectorAll('.rise-anim').forEach((el,i) => {
+      el.style.animationDelay = (i*0.08)+'s';
+    });
+  }, 150);
+}
+
+// 初始化城市卡片页粒子
+function initCardParticles() {
+  var container = document.getElementById('card-particles');
+  // 清空现有粒子
+  container.innerHTML = '';
+  // 创建新粒子
+  for(var i=0;i<25;i++){
+    var p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.animationDelay=Math.random()*18+'s';
+    p.style.animationDuration=(12+Math.random()*10)+'s';
+    p.style.width=(2+Math.random()*2)+'px';
+    p.style.height=p.style.width;
+    container.appendChild(p);
+  }
+}
+
+function continueJourney() {
+  const remaining = roundCities.filter(id => !roundGuessed.includes(id));
+  if (remaining.length === 0) {
+    showComplete();
+    return;
+  }
+  nextQuestion();
+  showScreen('guess-screen');
+}
+
+// ==================== 猜谜 ====================
+function showScreen(id) {
+  document.getElementById('carousel-screen').style.display = 'none';
+  document.getElementById('guess-screen').style.display = 'none';
+  document.getElementById('complete-screen').style.display = 'none';
+  document.getElementById('card-screen').style.display = 'none';
+  
+  const el = document.getElementById(id);
+  if(id === 'carousel-screen'){
+    el.style.display = 'flex';
+    startCarousel();
+  } else if(id === 'card-screen') {
+    el.style.display = 'flex';
+    stopCarousel();
+  } else {
+    stopCarousel();
+    el.style.display = 'flex';
+  }
+}
+
+function nextQuestion() {
+  if (!DB || DB.length === 0) {
+    console.error('[nextQuestion] DB not loaded');
+    return;
+  }
+  
+  const remaining = roundCities.filter(id => !roundGuessed.includes(id));
+  
+  if (remaining.length === 0) {
+    showComplete();
+    return;
+  }
+  
+  const cityId = remaining[Math.floor(Math.random() * remaining.length)];
+  curCityIdx = DB.findIndex(c => c.id === cityId);
+  
+  if (curCityIdx === -1) {
+    roundGuessed.push(cityId);
+    nextQuestion();
+    return;
+  }
+  
+  genOptions();
+  renderQuestion();
+}
+
+function genOptions() {
+  if (curCityIdx < 0 || curCityIdx >= DB.length) return;
+  const allWrongIdx = DB.map((c, i) => i).filter(i => i !== curCityIdx);
+  const shuffled = [...allWrongIdx].sort(() => Math.random() - 0.5);
+  const wrongs = shuffled.slice(0, 3);
+  curOptions = [...wrongs, curCityIdx].sort(() => Math.random() - 0.5);
+}
+
+function renderQuestion() {
+  const city = DB[curCityIdx];
+  const station = STATIONS[currentStation - 1];
+  const clue = city.cl[Math.floor(Math.random() * city.cl.length)];
+  
+  document.getElementById('guess-station').textContent = `第${currentStation}站 · ${station.name}`;
+  document.getElementById('guess-progress').textContent = `已猜 ${roundGuessed.length}/10`;
+  document.getElementById('clue-type').textContent = clue.t;
+  document.getElementById('clue-text').textContent = clue.text;
+  
+  const optsEl = document.getElementById('guess-opts');
+  optsEl.innerHTML = curOptions.map((optIdx, i) => {
+    const optCity = DB[optIdx];
+    const label = ['甲','乙','丙','丁'][i];
+    return `
+      <button class="guess-opt" data-opt-idx="${optIdx}">
+        <span class="opt-label">${label}</span>
+        <span class="opt-name">${optCity.name}</span>
+      </button>
+    `;
+  }).join('');
+  
+  // 绑定点击事件，获取点击位置用于金粉效果
+  optsEl.querySelectorAll('.guess-opt').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const optIdx = parseInt(this.getAttribute('data-opt-idx'));
+      guess(optIdx, e);
+    });
+  });
+  
+  isGuessing = true;
+}
+
+function guess(optIdx, event) {
+  if (!isGuessing) return;
+  
+  try {
+    const city = DB[curCityIdx];
+    if (!city) return;
+    
+    const btns = document.querySelectorAll('.guess-opt');
+    
+    if (optIdx === curCityIdx) {
+      isGuessing = false;
+      btns.forEach(btn => {
+        try {
+          const btnIdx = parseInt(btn.getAttribute('data-opt-idx'));
+          if (btnIdx === optIdx) btn.classList.add('correct');
+          btn.disabled = true;
+        } catch(e) {}
+      });
+      
+      // 触发金粉四散效果
+      if (event) {
+        createGoldBurst(event.clientX, event.clientY);
+      }
+      
+      if (!roundGuessed.includes(city.id)) roundGuessed.push(city.id);
+      if (!collected.includes(city.id)) {
+        collected.push(city.id);
+        localStorage.setItem('mc_collected', JSON.stringify(collected));
+      }
+      
+      setTimeout(() => showCard(curCityIdx), 1000);
+    } else {
+      btns.forEach(btn => {
+        try {
+          const btnIdx = parseInt(btn.getAttribute('data-opt-idx'));
+          if (btnIdx === optIdx) {
+            btn.classList.add('wrong');
+            btn.disabled = true;
+          }
+        } catch(e) {}
+      });
+    }
+  } catch(e) {
+    console.error('Error in guess():', e);
+  }
+}
+
+// 金粉四散效果
+function createGoldBurst(x, y) {
+  const particleCount = 18;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'gold-particle';
+    
+    // 随机角度和距离
+    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+    const distance = 60 + Math.random() * 80;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance + 40; // 额外向下偏移，模拟下落
+    
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    particle.style.setProperty('--tx', tx + 'px');
+    particle.style.setProperty('--ty', ty + 'px');
+    particle.style.animation = `goldBurst ${0.8 + Math.random() * 0.4}s ease-out forwards`;
+    particle.style.width = (3 + Math.random() * 3) + 'px';
+    particle.style.height = particle.style.width;
+    
+    document.body.appendChild(particle);
+    
+    // 动画结束后清理
+    setTimeout(() => {
+      if (particle.parentNode) {
+        particle.parentNode.removeChild(particle);
+      }
+    }, 1200);
+  }
+}
+
+function showComplete() {
+  const station = STATIONS[currentStation - 1];
+  
+  document.getElementById('passport-station').textContent = `第${currentStation}站 · ${station.name}`;
+  
+  const citiesGrid = document.getElementById('passport-cities-grid');
+  citiesGrid.innerHTML = roundGuessed.map(cityId => {
+    const city = DB.find(c => c.id === cityId);
+    return `<div class="passport-city-item">${city ? city.name : cityId}</div>`;
+  }).join('');
+  
+  const now = new Date();
+  document.getElementById('passport-date').textContent = `${now.getFullYear()}年 · 仲夏`;
+  
+  const btn = document.getElementById('passport-btn');
+  btn.textContent = '继续探险';
+  
+  showScreen('complete-screen');
+}
+
+function nextAction() {
+  backToCarousel();
+}
+
+function backToCarousel() {
+  showScreen('carousel-screen');
+}
+
+// ==================== 启动 ====================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
