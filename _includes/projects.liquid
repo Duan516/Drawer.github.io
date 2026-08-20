@@ -10,10 +10,10 @@
           sizes = "250px"
           alt="project thumbnail"
           class="card-img-top"
-          style="height: 60%; object-fit: cover; width: 100%;"
+          style="aspect-ratio: 3 / 2; object-fit: cover; width: 100%; height: auto;"
         %}
       {% endif %}
-      <div class="card-body" style="height: 40%;">
+      <div class="card-body">
         <h2 class="card-title">{{ project.title }}</h2>
         <p class="card-text">{{ project.description }}</p>
         <div class="row ml-1 mr-1 p-0">

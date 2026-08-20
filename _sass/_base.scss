@@ -183,7 +183,11 @@ ul.task-list input[type="checkbox"] {
 
   .card-body {
     padding: 1.25rem 1.25rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
+
 }
 
 // Citation
@@ -689,6 +693,8 @@ footer.sticky-bottom {
   .card {
     img {
       width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
     }
   }
 

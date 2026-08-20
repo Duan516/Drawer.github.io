@@ -5,16 +5,17 @@ permalink: /projects/
 description: 
 nav: true
 nav_order: 2
-display_categories: [work, fun]
+display_categories: [work, fun, academy]
 horizontal: false
 ---
 
 <!-- pages/projects.md -->
+{::nomarkdown}
 <div class="projects">
 {% if site.enable_project_categories and page.display_categories %}
   <!-- Display categorized projects -->
   {% for category in page.display_categories %}
-  <a id="{{ category }}" href=".#{{ category }}">
+  <a id="{{ category }}" href=".#{{ category }}" markdown="0">
     <h2 class="category">{{ category }}</h2>
   </a>
   {% assign categorized_projects = site.projects | where: "category", category %}
@@ -33,7 +34,7 @@ horizontal: false
     {% for project in sorted_projects %}
       {% include projects.liquid %}
     {% endfor %}
-  </div>
+    </div>
   {% endif %}
   {% endfor %}
 
@@ -59,7 +60,8 @@ horizontal: false
     {% for project in sorted_projects %}
       {% include projects.liquid %}
     {% endfor %}
-  </div>
+    </div>
   {% endif %}
 {% endif %}
 </div>
+{:/nomarkdown}

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>苏州河 Citywalk · 百年记忆手册</title>
+<style>
+  :root {
+    --river-deep: #1a3a4a; --river-mid: #2d6a7a; --river-light: #4da6b8; --river-foam: #a8d8e0;
+    --warm-sand: #f5e6c8; --warm-gold: #d4a843; --warm-amber: #c47a2b;
+    --ink-dark: #1c1c1e; --ink-mid: #3d3d3f; --ink-light: #6c6c6e;
+    --paper: #fdf6ec;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    background: var(--paper); color: var(--ink-dark); overflow-x: hidden;
+  }
+
+  /* ===== 导航 ===== */
+  #nav { position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(26,58,74,0.92);backdrop-filter:blur(12px);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;transform:translateY(-100%);transition:transform 0.4s; }
+  #nav.visible { transform:translateY(0); }
+  #nav-title { color:var(--river-foam);font-size:14px;letter-spacing:1px;font-weight:500; }
+  #nav-menu-btn { width:36px;height:36px;display:flex;flex-direction:column;justify-content:center;gap:5px;cursor:pointer;padding:4px; }
+  #nav-menu-btn span { display:block;height:2px;background:var(--river-foam);border-radius:1px;transition:all 0.3s; }
+
+  #drawer { position:fixed;top:54px;right:0;width:260px;max-height:calc(100vh - 54px);background:rgba(20,40,52,0.97);backdrop-filter:blur(20px);z-index:999;overflow-y:auto;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);border-left:1px solid rgba(77,166,184,0.2); }
+  #drawer.open { transform:translateX(0); }
+  #drawer a { display:flex;align-items:center;gap:10px;padding:14px 20px;color:rgba(168,216,224,0.85);text-decoration:none;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);transition:all 0.2s; }
+  #drawer a:hover { color:#fff;background:rgba(77,166,184,0.15);padding-left:28px; }
+  #drawer a .em { font-size:16px;flex-shrink:0; }
+  #progress-bar { position:fixed;top:0;left:0;height:3px;background:linear-gradient(to right,var(--river-mid),var(--river-foam));z-index:2000;width:0%;transition:width 0.1s linear; }
+  #back-top { position:fixed;bottom:28px;right:20px;width:44px;height:44px;border-radius:50%;background:var(--river-deep);border:1.5px solid var(--river-light);color:var(--river-foam);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;opacity:0;transform:scale(0.7) translateY(20px);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:0 4px 16px rgba(0,0,0,0.25); }
+  #back-top.show { opacity:1;transform:scale(1) translateY(0); }
+  #back-top:hover { background:var(--river-mid); }
+
+  /* ===== 封面 ===== */
+  #cover { height:100vh;min-height:600px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center; }
+  #cover-bg { position:absolute;inset:0;background:linear-gradient(165deg,#0d2535 0%,#1a3a4a 25%,#1e4d5e 50%,#163040 75%,#0a1e2b 100%); }
+  .wave-layer { position:absolute;bottom:-20px;left:-5%;width:110%;height:260px;opacity:0.15; }
+  .wave-layer svg { width:100%;height:100%; }
+  #wave1 { animation:waveMove 8s ease-in-out infinite; }
+  #wave2 { animation:waveMove 11s ease-in-out infinite reverse;opacity:0.1;bottom:-30px; }
+  #wave3 { animation:waveMove 14s ease-in-out infinite;opacity:0.07;bottom:-10px; }
+  @keyframes waveMove { 0%,100%{transform:translateX(0) scaleY(1)} 50%{transform:translateX(-4%) scaleY(1.06)} }
+  .particle { position:absolute;border-radius:50%;background:rgba(168,216,224,0.3);animation:float linear infinite;pointer-events:none; }
+  @keyframes float { 0%{transform:translateY(0) translateX(0) scale(1);opacity:0} 10%{opacity:1} 90%{opacity:0.6} 100%{transform:translateY(-90vh) translateX(30px) scale(0.4);opacity:0} }
+  #cover-content { position:relative;z-index:2;text-align:center;padding:20px;max-width:540px; }
+  #cover-label { font-size:11px;letter-spacing:4px;color:var(--river-foam);opacity:0.7;margin-bottom:18px;text-transform:uppercase; }
+  #cover-title-zh { font-size:clamp(40px,10vw,72px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:6px;letter-spacing:4px;text-shadow:0 4px 40px rgba(77,166,184,0.5); }
+  #cover-title-en { font-size:clamp(13px,3vw,18px);color:var(--river-foam);letter-spacing:6px;margin-bottom:24px;opacity:0.8;font-weight:300; }
+  #cover-tagline { font-size:clamp(13px,3.5vw,16px);color:rgba(245,230,200,0.9);line-height:1.9;margin-bottom:36px;font-weight:300; }
+  #cover-meta { display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:44px; }
+  .meta-tag { padding:6px 16px;border:1px solid rgba(168,216,224,0.35);border-radius:20px;font-size:12px;color:var(--river-foam);letter-spacing:1px; }
+  #cover-scroll-hint { color:rgba(168,216,224,0.6);font-size:12px;letter-spacing:2px;animation:bounce 2s ease-in-out infinite; }
+  #cover-scroll-hint::after { content:'';display:block;width:1px;height:40px;background:linear-gradient(to bottom,rgba(168,216,224,0.5),transparent);margin:10px auto 0; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+  /* ===== 路线概览条 ===== */
+  #route-bar { background:var(--river-deep);padding:20px;overflow-x:auto;white-space:nowrap;scrollbar-width:none; }
+  #route-bar::-webkit-scrollbar { display:none; }
+  .route-inner { display:inline-flex;align-items:center;gap:4px;min-width:max-content;padding:0 20px; }
+  .route-node { display:inline-flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:transform 0.2s; }
+  .route-node:hover { transform:translateY(-3px); }
+  .route-dot { width:10px;height:10px;border-radius:50%;background:var(--river-light);border:2px solid var(--river-foam); }
+  .route-name { font-size:10px;color:var(--river-foam);letter-spacing:0.5px;opacity:0.8; }
+  .route-arrow { font-size:10px;color:rgba(77,166,184,0.4);padding:0 2px;margin-bottom:14px; }
+
+  /* ===== 章节通用结构 ===== */
+  .chapter { padding:80px 20px 70px;position:relative;overflow:hidden; }
+  .chapter-header { max-width:680px;margin:0 auto 40px;opacity:0;transform:translateY(30px);transition:all 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .chapter-header.in-view { opacity:1;transform:translateY(0); }
+  .chapter-num { font-size:11px;letter-spacing:3px;margin-bottom:8px;font-weight:500; }
+  .chapter-emoji { font-size:36px;margin-bottom:10px;display:block; }
+  .chapter-title { font-size:clamp(24px,6vw,36px);font-weight:700;line-height:1.2;margin-bottom:12px; }
+  .chapter-sub { font-size:14px;font-style:italic;letter-spacing:0.5px; }
+  .chapter-divider { width:40px;height:3px;border-radius:2px;margin-top:14px; }
+  .content-block { max-width:680px;margin:0 auto;opacity:0;transform:translateY(24px);transition:all 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .content-block.in-view { opacity:1;transform:translateY(0); }
+  .story-card { border-radius:16px;padding:24px;margin-bottom:16px;transition:transform 0.2s,box-shadow 0.2s;cursor:pointer; }
+  .story-card:hover { transform:translateY(-2px); }
+  .story-card h3 { font-size:16px;margin-bottom:10px;font-weight:600; }
+  .story-card p { font-size:14px;line-height:1.85; }
+  .quote-block { border-radius:12px;padding:22px 24px;margin:16px 0; }
+  .quote-block p { font-size:15px;line-height:1.9;font-style:italic;margin-bottom:8px; }
+  .quote-block cite { font-size:12px;font-style:normal; }
+  .highlight { font-weight:600; }
+  .stats-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px; }
+  .stat-card { border-radius:12px;padding:16px 12px;text-align:center;transition:transform 0.2s; }
+  .stat-card:hover { transform:scale(1.04); }
+  .stat-num { font-size:clamp(20px,5vw,28px);font-weight:700;margin-bottom:4px;line-height:1; }
+  .stat-label { font-size:10px;letter-spacing:0.5px;line-height:1.4; }
+  .data-table { width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;border-radius:12px;overflow:hidden; }
+  .data-table th { padding:12px 14px;text-align:left;font-weight:500;font-size:12px;letter-spacing:0.5px; }
+  .data-table td { padding:11px 14px;border-bottom:1px solid rgba(0,0,0,0.05);line-height:1.5; }
+  .data-table tr:last-child td { border-bottom:none; }
+  .icon-list { display:flex;flex-direction:column;gap:12px;margin-bottom:16px; }
+  .icon-item { display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px; }
+  .icon-item-icon { font-size:22px;flex-shrink:0;margin-top:1px; }
+  .icon-item-text { font-size:13.5px;line-height:1.75; }
+  .timeline { position:relative;padding-left:28px;margin-bottom:16px; }
+  .timeline::before { content:'';position:absolute;left:8px;top:6px;bottom:0;width:2px;border-radius:1px; }
+  .timeline-item { position:relative;margin-bottom:20px;opacity:0;transform:translateX(-12px);transition:all 0.4s ease; }
+  .timeline-item.in-view { opacity:1;transform:translateX(0); }
+  .timeline-item::before { content:'';position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%; }
+  .timeline-year { font-size:12px;font-weight:700;margin-bottom:4px;letter-spacing:1px; }
+  .timeline-content { font-size:13.5px;line-height:1.75; }
+  .tag-list { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px; }
+  .tag { padding:5px 14px;border-radius:20px;font-size:12px;transition:all 0.2s;cursor:default; }
+  .ripple-container { position:relative;overflow:hidden; }
+  .ripple { position:absolute;border-radius:50%;transform:scale(0);animation:rippleAnim 0.6s linear;pointer-events:none; }
+  @keyframes rippleAnim { to { transform:scale(4);opacity:0; } }
+
+  /* ====== 章节独立风格 ====== */
+
+  /* ── 船民·船工：老电影胶片 ── */
+  .ch-boat { background:linear-gradient(180deg,#0d0a05 0%,#1a1008 30%,#1f140c 70%,#150c04 100%);color:#d4c0a0; }
+  .ch-boat .chapter-num { color:#c4a35a; }
+  .ch-boat .chapter-title { color:#f0d8a0; }
+  .ch-boat .chapter-sub { color:#a08050; }
+  .ch-boat .chapter-divider { background:linear-gradient(to right,#c4a35a,transparent); }
+  .ch-boat .story-card { background:rgba(255,255,255,0.04);border:1px solid rgba(196,163,90,0.15);box-shadow:0 2px 16px rgba(0,0,0,0.3);border-left:3px solid #c4a35a; }
+  .ch-boat .story-card:hover { background:rgba(255,255,255,0.07);border-color:rgba(196,163,90,0.3);box-shadow:0 6px 28px rgba(0,0,0,0.4); }
+  .ch-boat .story-card h3 { color:#f0d8a0; }
+  .ch-boat .quote-block { background:linear-gradient(135deg,rgba(196,163,90,0.08),rgba(160,128,80,0.04));border-left:3px solid #c4a35a; }
+  .ch-boat .quote-block p { color:#e8c880; }
+  .ch-boat .quote-block cite { color:#a08050; }
+  .ch-boat .highlight { background:linear-gradient(180deg,transparent 60%,rgba(196,163,90,0.3) 60%);color:#f0d8a0; }
+  .ch-boat .timeline::before { background:linear-gradient(to bottom,#c4a35a,rgba(196,163,90,0.2),transparent); }
+  .ch-boat .timeline-item::before { background:#8b6a3a;border-color:#c4a35a; }
+  .ch-boat .timeline-year { color:#c4a35a; }
+  .ch-boat .film-strip-top,.ch-boat .film-strip-bottom { height:18px;background:#0a0703;display:flex;align-items:center;justify-content:space-around;padding:0 8px;margin:0 -20px; }
+  .ch-boat .film-hole { width:8px;height:8px;background:#1a1008;border-radius:1px; }
+  .ch-boat .film-grain { position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.008) 2px,rgba(255,255,255,0.008) 3px);border-radius:16px; }
+
+  /* ── 码头·集市：旧报纸 ── */
+  .ch-market { background:#f0e4c5;background-image:radial-gradient(ellipse at 20% 50%,rgba(200,170,120,0.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(180,150,100,0.1) 0%,transparent 50%);color:#2a1a0a; }
+  .ch-market .chapter-num { color:#8b5a2b; }
+  .ch-market .chapter-title { color:#2a1a0a;font-family:'SimSun','STSong',serif; }
+  .ch-market .chapter-sub { color:#6a4a2a; }
+  .ch-market .chapter-divider { background:linear-gradient(to right,#8b5a2b,#c4a35a); }
+  .ch-market .story-card { background:rgba(255,255,255,0.55);border:1px solid rgba(139,90,43,0.15);box-shadow:2px 2px 8px rgba(0,0,0,0.06);border-left:3px double #8b5a2b; }
+  .ch-market .story-card:hover { background:rgba(255,255,255,0.75);box-shadow:3px 4px 16px rgba(0,0,0,0.1); }
+  .ch-market .story-card h3 { color:#3a1a0a;font-family:'SimSun','STSong',serif; }
+  .ch-market .story-card p,.ch-market .icon-item-text { font-family:'SimSun','STSong',serif;color:#4a2a1a; }
+  .ch-market .quote-block { background:rgba(200,170,130,0.15);border-left:3px solid #8b5a2b; }
+  .ch-market .quote-block p { color:#3a1a0a;font-family:'KaiTi','STKaiti',serif; }
+  .ch-market .quote-block cite { color:#8b6a4a;font-family:'SimSun',serif; }
+  .ch-market .highlight { background:linear-gradient(180deg,transparent 60%,rgba(200,170,120,0.4) 60%);color:#3a1a0a; }
+  .ch-market .data-table { box-shadow:1px 2px 8px rgba(0,0,0,0.08); }
+  .ch-market .data-table th { background:#3a2a1a;color:#f0e4c5; }
+  .ch-market .data-table tr:hover td { background:rgba(200,170,120,0.1); }
+  .ch-market .icon-item { background:rgba(255,255,255,0.5);border:1px solid rgba(139,90,43,0.1); }
+  .ch-market .tag { background:rgba(139,90,43,0.08);border:1px solid rgba(139,90,43,0.2);color:#8b5a2b; }
+  .ch-market .tag:hover { background:#8b5a2b;color:#f0e4c5; }
+  .ch-market .newspaper-watermark { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:60px;color:rgba(42,26,10,0.025);font-family:'SimSun',serif;white-space:nowrap;pointer-events:none; }
+
+  /* ── 啤酒·工业遗产：工业厂房 ── */
+  .ch-industry { background:linear-gradient(180deg,#2a2018 0%,#382a1e 40%,#2a2015 100%);color:#d0c0a0; }
+  .ch-industry .chapter-num { color:#c47a2b; }
+  .ch-industry .chapter-title { color:#f0d8b0; }
+  .ch-industry .chapter-sub { color:#a08060; }
+  .ch-industry .chapter-divider { background:linear-gradient(to right,#c47a2b,#d4a843); }
+  .ch-industry .story-card { background:rgba(255,255,255,0.04);border:1px solid rgba(196,122,43,0.2);border-radius:4px;border-left:4px solid #c47a2b;position:relative; }
+  .ch-industry .story-card:hover { background:rgba(255,255,255,0.07);border-color:rgba(196,122,43,0.4); }
+  .ch-industry .story-card h3 { color:#f0d8b0; }
+  .ch-industry .story-card p { color:#c0a080; }
+  .ch-industry .story-card::after { content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:rgba(196,122,43,0.4); }
+  .ch-industry .data-table th { background:#3a2010;color:#f0d8b0;font-family:'SimSun',serif; }
+  .ch-industry .data-table td { color:#c0a080; }
+  .ch-industry .data-table tr:hover td { background:rgba(196,122,43,0.08); }
+  .ch-industry .tag { background:rgba(196,122,43,0.1);border:1px solid rgba(196,122,43,0.25);color:#d4a070; }
+  .ch-industry .tag:hover { background:#c47a2b;color:#2a2018; }
+  .ch-industry .highlight { background:linear-gradient(180deg,transparent 60%,rgba(196,122,43,0.25) 60%);color:#f0d8b0; }
+  .ch-industry .quote-block { background:rgba(196,122,43,0.06);border-left:3px solid #c47a2b; }
+  .ch-industry .quote-block p { color:#e0c090; }
+  .ch-industry .quote-block cite { color:#a08060; }
+  .ch-industry .blueprint-line { height:1px;background:rgba(196,122,43,0.15);margin:12px 0 20px;position:relative; }
+  .ch-industry .blueprint-line::after { content:'◆';position:absolute;right:0;top:-8px;color:rgba(196,122,43,0.3);font-size:12px; }
+
+  /* ── 游泳·童年：夏日照相馆 ── */
+  .ch-swim { background:linear-gradient(180deg,#f5edd6 0%,#fef7e8 30%,#f8f0dc 100%);color:#3a2a1a; }
+  .ch-swim .chapter-num { color:#d4a020; }
+  .ch-swim .chapter-title { color:#5a3a1a; }
+  .ch-swim .chapter-sub { color:#8a6a4a; }
+  .ch-swim .chapter-divider { background:linear-gradient(to right,#d4a020,#f0d060); }
+  .ch-swim .story-card { background:#fff;border:1px solid rgba(212,160,32,0.12);border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.04);border-left:3px solid #e8b830; }
+  .ch-swim .story-card:hover { box-shadow:0 6px 24px rgba(0,0,0,0.08); }
+  .ch-swim .story-card h3 { color:#5a3a1a; }
+  .ch-swim .story-card p { color:#4a3a2a;line-height:1.9; }
+  .ch-swim .quote-block { background:linear-gradient(135deg,rgba(240,210,100,0.1),rgba(255,240,180,0.08));border-left:3px solid #e8b830; }
+  .ch-swim .quote-block p { color:#5a3a1a; }
+  .ch-swim .quote-block cite { color:#a08050; }
+  .ch-swim .highlight { background:linear-gradient(180deg,transparent 60%,rgba(240,210,100,0.35) 60%);color:#3a1a0a; }
+  .ch-swim .stat-card { background:linear-gradient(135deg,#5a4a2a,#3a2a1a);color:#f0d8a0; }
+  .ch-swim .stat-num { color:#f0d060; }
+  .ch-swim .stat-label { color:rgba(240,216,160,0.6); }
+  .ch-swim .summer-ray { position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 70% 20%,rgba(255,220,100,0.08) 0%,transparent 50%); }
+
+  /* ── 棚户区·拆迁：旧报纸粗粝版 ── */
+  .ch-shanty { background:#e8d8b8;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,0.015) 0px,rgba(0,0,0,0.015) 1px,transparent 1px,transparent 4px);color:#2a1a0a; }
+  .ch-shanty .chapter-num { color:#7a3a1a; }
+  .ch-shanty .chapter-title { color:#2a1a0a;font-family:'SimSun',serif; }
+  .ch-shanty .chapter-sub { color:#5a3a2a; }
+  .ch-shanty .chapter-divider { background:linear-gradient(to right,#7a3a1a,#b06030); }
+  .ch-shanty .story-card { background:rgba(255,255,255,0.45);border:1px solid rgba(122,58,26,0.12);border-radius:4px;border-left:4px solid #7a3a1a; }
+  .ch-shanty .story-card:hover { background:rgba(255,255,255,0.65); }
+  .ch-shanty .story-card h3 { color:#3a1a0a;font-family:'SimSun',serif; }
+  .ch-shanty .story-card p { font-family:'SimSun',serif;color:#3a2a1a; }
+  .ch-shanty .data-table { box-shadow:1px 2px 6px rgba(0,0,0,0.06);border:1px solid rgba(122,58,26,0.1); }
+  .ch-shanty .data-table th { background:#4a2a1a;color:#e8d8b8;font-family:'SimSun',serif; }
+  .ch-shanty .data-table tr:hover td { background:rgba(180,130,100,0.12); }
+  .ch-shanty .quote-block { background:rgba(180,140,100,0.12);border-left:3px solid #7a3a1a; }
+  .ch-shanty .quote-block p { color:#3a1a0a;font-family:'KaiTi',serif; }
+  .ch-shanty .quote-block cite { color:#8a6a4a; }
+  .ch-shanty .highlight { background:linear-gradient(180deg,transparent 60%,rgba(180,140,100,0.35) 60%);color:#2a0a0a;font-family:'SimSun',serif; }
+
+  /* ── 污染·治理：暗黑→清洁渐变 ── */
+  .ch-pollution { background:linear-gradient(180deg,#0a0a0a 0%,#0d1512 25%,#1a2a22 50%,#1a3528 75%,#1a4030 100%);color:#c0c8c0; }
+  .ch-pollution .chapter-num { color:#5a8a6a; }
+  .ch-pollution .chapter-title { color:#d0e8d0; }
+  .ch-pollution .chapter-sub { color:#80a880; }
+  .ch-pollution .chapter-divider { background:linear-gradient(to right,#5a8a6a,#8ab88a); }
+  .ch-pollution .story-card { background:rgba(255,255,255,0.03);border:1px solid rgba(90,138,106,0.15);border-left:3px solid #5a8a6a; }
+  .ch-pollution .story-card:hover { background:rgba(255,255,255,0.06);border-color:rgba(90,138,106,0.35); }
+  .ch-pollution .story-card h3 { color:#c0e8c0; }
+  .ch-pollution .story-card p { color:#a0b8a0; }
+  .ch-pollution .quote-block { background:rgba(90,138,106,0.06);border-left:3px solid #5a8a6a; }
+  .ch-pollution .quote-block p { color:#c0e0c0; }
+  .ch-pollution .quote-block cite { color:#80a880; }
+  .ch-pollution .highlight { background:linear-gradient(180deg,transparent 60%,rgba(90,200,120,0.25) 60%);color:#d0f0d0; }
+  .ch-pollution .timeline::before { background:linear-gradient(to bottom,#5a6a5a,#8ab88a,transparent); }
+  .ch-pollution .timeline-item::before { background:#3a5a3a;border-color:#6a9a6a; }
+  .ch-pollution .timeline-year { color:#8ab88a; }
+  .ch-pollution .timeline-content { color:#a0b8a0; }
+  .ch-pollution .murk-overlay { position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,0.4) 0%,rgba(0,0,0,0.1) 60%,transparent 100%); }
+
+  /* ── 洪水·防汛：水文蓝图 ── */
+  .ch-flood { background:#1a2430;background-image:linear-gradient(rgba(77,120,160,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(77,120,160,0.06) 1px,transparent 1px);background-size:40px 40px;color:#b0c8d8; }
+  .ch-flood .chapter-num { color:#5a9aca; }
+  .ch-flood .chapter-title { color:#c8e0f0; }
+  .ch-flood .chapter-sub { color:#80a8c0; }
+  .ch-flood .chapter-divider { background:linear-gradient(to right,#5a9aca,#8ac8f0); }
+  .ch-flood .icon-item { background:rgba(90,154,202,0.06);border:1px solid rgba(90,154,202,0.12);border-radius:8px; }
+  .ch-flood .icon-item-icon { color:#8ac8f0; }
+  .ch-flood .icon-item-text { color:#b0c8d8; }
+  .ch-flood .icon-item-text strong { color:#d0e8f8; }
+  .ch-flood .story-card { background:rgba(255,255,255,0.03);border:1px solid rgba(90,154,202,0.12);border-radius:6px; }
+  .ch-flood .quote-block { background:rgba(90,154,202,0.06);border-left:3px solid #5a9aca; }
+  .ch-flood .quote-block p { color:#c8e0f0; }
+  .ch-flood .quote-block cite { color:#80a8c0; }
+  .ch-flood .highlight { background:linear-gradient(180deg,transparent 60%,rgba(90,154,202,0.3) 60%);color:#d0e8f8; }
+  .ch-flood .data-table th { background:#1a3040;color:#a0c8e0; }
+  .ch-flood .data-table td { color:#a0b8c8; }
+  .ch-flood .data-table tr:hover td { background:rgba(90,154,202,0.08); }
+
+  /* ── 自然·生态·回归 ── */
+  .ch-nature { background:linear-gradient(180deg,#e8f0e0 0%,#f0f5e8 30%,#eaf2e2 100%);color:#2a3a1a; }
+  .ch-nature .chapter-num { color:#4a8a4a; }
+  .ch-nature .chapter-title { color:#2a4a1a; }
+  .ch-nature .chapter-sub { color:#5a7a4a; }
+  .ch-nature .chapter-divider { background:linear-gradient(to right,#4a8a4a,#6aba6a); }
+  .ch-nature .story-card { background:#fff;border:1px solid rgba(74,138,74,0.12);border-left:4px solid #4a8a4a;border-radius:12px; }
+  .ch-nature .story-card:hover { box-shadow:0 6px 24px rgba(74,138,74,0.1); }
+  .ch-nature .story-card h3 { color:#2a4a1a; }
+  .ch-nature .story-card p { color:#3a5a2a; }
+  .ch-nature .quote-block { background:rgba(120,180,100,0.08);border-left:3px solid #4a8a4a; }
+  .ch-nature .quote-block p { color:#2a4a1a; }
+  .ch-nature .quote-block cite { color:#6a8a5a; }
+  .ch-nature .highlight { background:linear-gradient(180deg,transparent 60%,rgba(120,200,100,0.25) 60%);color:#2a4a1a; }
+  .ch-nature .stat-card { background:linear-gradient(135deg,#3a5a2a,#2a4a1a);color:#c0e0b0; }
+  .ch-nature .stat-num { color:#a0f0a0; }
+  .ch-nature .stat-label { color:rgba(192,224,176,0.7); }
+  .ch-nature .leaf-float { position:absolute;pointer-events:none;animation:leafDrift 12s ease-in-out infinite;opacity:0.08;font-size:40px; }
+  @keyframes leafDrift { 0%,100%{transform:translate(0,0) rotate(0deg)} 25%{transform:translate(20px,-30px) rotate(20deg)} 50%{transform:translate(-10px,-60px) rotate(-10deg)} 75%{transform:translate(15px,-90px) rotate(15deg)} }
+
+  /* ── 未来·政策：现代展望 ── */
+  .ch-future { background:linear-gradient(180deg,#f8fafc 0%,#f0f4f8 40%,#e8f0f6 100%);color:#1a2a3a; }
+  .ch-future .chapter-num { color:#3a6aaa; }
+  .ch-future .chapter-title { color:#1a2a4a; }
+  .ch-future .chapter-sub { color:#5a7a9a; }
+  .ch-future .chapter-divider { background:linear-gradient(to right,#3a6aaa,#6a9ad8); }
+  .ch-future .story-card { background:#fff;border:1px solid rgba(58,106,170,0.12);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.04);border-left:4px solid #3a6aaa; }
+  .ch-future .story-card:hover { box-shadow:0 6px 24px rgba(0,0,0,0.08);border-color:rgba(58,106,170,0.3); }
+  .ch-future .story-card h3 { color:#1a2a4a; }
+  .ch-future .story-card p { color:#4a5a6a; }
+  .ch-future .quote-block { background:rgba(58,106,170,0.05);border-left:3px solid #3a6aaa; }
+  .ch-future .quote-block p { color:#1a2a4a; }
+  .ch-future .quote-block cite { color:#6a8aaa; }
+  .ch-future .highlight { background:linear-gradient(180deg,transparent 60%,rgba(58,106,170,0.15) 60%);color:#1a2a4a; }
+  .ch-future .icon-item { background:#fff;border:1px solid rgba(58,106,170,0.08); }
+  .ch-future .icon-item-icon { color:#3a6aaa; }
+  .ch-future .data-table th { background:#2a3a4a;color:#d0e0f0; }
+  .ch-future .data-table tr:hover td { background:rgba(58,106,170,0.05); }
+
+  /* ── 书籍·电影·影像：画廊 ── */
+  .ch-culture { background:linear-gradient(180deg,#1c1818 0%,#241e1e 40%,#1a1616 100%);color:#c0b8b0; }
+  .ch-culture .chapter-num { color:#c4a0a0; }
+  .ch-culture .chapter-title { color:#e8d8d0; }
+  .ch-culture .chapter-sub { color:#a09088; }
+  .ch-culture .chapter-divider { background:linear-gradient(to right,#c4a0a0,#e0c0b8); }
+  .ch-culture .media-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px; }
+  .ch-culture .media-card { background:rgba(255,255,255,0.04);border-radius:14px;overflow:hidden;border:1px solid rgba(196,160,160,0.1);transition:transform 0.3s,box-shadow 0.3s;cursor:pointer; }
+  .ch-culture .media-card:hover { transform:translateY(-5px);box-shadow:0 12px 36px rgba(0,0,0,0.4);border-color:rgba(196,160,160,0.3); }
+  .ch-culture .media-card-header { height:80px;display:flex;align-items:center;justify-content:center;font-size:32px; }
+  .ch-culture .media-card-body { padding:14px; }
+  .ch-culture .media-card-type { font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;font-weight:500; }
+  .ch-culture .media-card-title { font-size:14px;font-weight:700;color:#e8d8d0;margin-bottom:4px;line-height:1.3; }
+  .ch-culture .media-card-author { font-size:11px;color:#a09088; }
+  .ch-culture .media-card-desc { font-size:12px;color:#908880;line-height:1.6;margin-top:8px; }
+  .ch-culture .quote-block { background:rgba(196,160,160,0.06);border-left:3px solid #c4a0a0; }
+  .ch-culture .quote-block p { color:#e8d8d0; }
+  .ch-culture .quote-block cite { color:#a09088; }
+  .ch-culture .highlight { background:linear-gradient(180deg,transparent 60%,rgba(196,160,160,0.2) 60%);color:#f0e0d8; }
+
+  /* ── 路线速查：深色沉浸 ── */
+  #section-route { background:linear-gradient(180deg,#0a1620,#0d1a28);padding:80px 20px 80px; }
+  #section-route .chapter-title { color:#fff; }
+  #section-route .chapter-sub { color:var(--river-foam);opacity:0.8; }
+  #section-route .chapter-num { color:rgba(168,216,224,0.6); }
+  #section-route .chapter-divider { background:linear-gradient(to right,var(--river-foam),transparent); }
+  .route-table-card { max-width:680px;margin:0 auto;opacity:0;transform:translateY(20px);transition:all 0.5s ease; }
+  .route-table-card.in-view { opacity:1;transform:translateY(0); }
+  .route-item { display:flex;align-items:flex-start;gap:16px;padding:18px;background:rgba(255,255,255,0.05);border-radius:14px;margin-bottom:10px;border:1px solid rgba(168,216,224,0.1);transition:all 0.25s;cursor:pointer; }
+  .route-item:hover { background:rgba(255,255,255,0.1);border-color:rgba(168,216,224,0.3);transform:translateX(4px); }
+  .route-item-num { width:32px;height:32px;border-radius:50%;background:var(--river-mid);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0; }
+  .route-item-name { font-size:15px;font-weight:600;color:var(--river-foam);margin-bottom:4px; }
+  .route-item-theme { font-size:11px;color:rgba(168,216,224,0.6);margin-bottom:6px;letter-spacing:0.5px; }
+  .route-item-desc { font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6; }
+
+  /* ===== 收集盒 ===== */
+  #memory-box { background:linear-gradient(180deg,#f4e8c1,#efe0b0);padding:60px 20px 50px;position:relative;overflow:hidden; }
+  #memory-box .chapter-title { color:#3a2a1a;font-family:'SimSun',serif; }
+  #memory-box .chapter-sub { color:#8b6a4a; }
+  #memory-box .chapter-num { color:#8b5a2b; }
+  #memory-box .chapter-divider { background:linear-gradient(to right,#8b5a2b,#c4a35a); }
+  .mb-entries { max-width:680px;margin:0 auto 20px;display:flex;flex-direction:column;gap:8px; }
+  .mb-entry { display:flex;gap:10px;background:rgba(255,255,255,0.4);border-bottom:1px dashed #c4a35a;border-radius:8px 8px 0 0;padding:12px 14px;font-family:'KaiTi','STKaiti',serif;font-size:13px;opacity:0;transform:translateY(10px);transition:all 0.4s ease; }
+  .mb-entry.visible { opacity:1;transform:translateY(0); }
+  .mb-entry-num { color:#8b5a2b;font-weight:700;font-size:11px;flex-shrink:0;width:24px; }
+  .mb-entry-text { color:#3a2a1a;line-height:1.6;flex:1; }
+  .mb-entry-time { color:#a08050;font-size:10px;flex-shrink:0;align-self:flex-end; }
+  .mb-input-row { max-width:680px;margin:16px auto;display:flex;gap:8px; }
+  .mb-input { flex:1;background:rgba(255,255,255,0.65);border:2px solid #c4a35a;border-radius:10px;padding:12px 16px;font-family:'KaiTi','STKaiti',serif;font-size:14px;color:#3a2a1a;outline:none;transition:border-color 0.3s; }
+  .mb-input:focus { border-color:#8b5a2b; }
+  .mb-input::placeholder { color:#c4a080; }
+  .mb-btn { padding:12px 28px;background:linear-gradient(135deg,#8b5a2b,#a07040);border:none;border-radius:10px;color:#f4e8c1;font-family:'KaiTi','STKaiti',serif;font-size:14px;cursor:pointer;letter-spacing:2px;transition:all 0.3s;white-space:nowrap; }
+  .mb-btn:hover { background:linear-gradient(135deg,#a07040,#8b5a2b);transform:scale(1.03); }
+  .mb-river-line { position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(to top,var(--river-deep),transparent);opacity:0.3; }
+
+  /* ===== 页脚 ===== */
+  #footer { background:#0a1e2b;padding:50px 20px 40px;text-align:center; }
+  #footer-logo { font-size:28px;letter-spacing:4px;color:var(--river-foam);margin-bottom:10px;font-weight:700; }
+  #footer-sub { font-size:12px;color:rgba(168,216,224,0.5);letter-spacing:2px;margin-bottom:28px; }
+  #footer-divider { width:40px;height:1px;background:rgba(77,166,184,0.3);margin:0 auto 20px; }
+  #footer-info { font-size:11px;color:rgba(168,216,224,0.35);line-height:2;letter-spacing:0.5px; }
+
+  @media (max-width:500px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .ch-culture .media-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav id="nav">
+  <div id="nav-title">苏州河 · Citywalk 手册</div>
+  <div id="nav-menu-btn" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
+</nav>
+
+<div id="drawer">
+  <a href="#cover" onclick="closeDrawer()"><span class="em">🌊</span>封面</a>
+  <a href="#ch-boat" onclick="closeDrawer()"><span class="em">⛵</span>船民·船工</a>
+  <a href="#ch-market" onclick="closeDrawer()"><span class="em">🏪</span>码头·集市</a>
+  <a href="#ch-industry" onclick="closeDrawer()"><span class="em">🍺</span>啤酒·工业遗产</a>
+  <a href="#ch-swim" onclick="closeDrawer()"><span class="em">🏊</span>游泳·童年·暑假</a>
+  <a href="#ch-shanty" onclick="closeDrawer()"><span class="em">🏚️</span>棚户区·拆迁</a>
+  <a href="#ch-pollution" onclick="closeDrawer()"><span class="em">🏭</span>污染·治理</a>
+  <a href="#ch-flood" onclick="closeDrawer()"><span class="em">🌊</span>洪水·防汛</a>
+  <a href="#ch-nature" onclick="closeDrawer()"><span class="em">🌿</span>自然·生态·回归</a>
+  <a href="#ch-future" onclick="closeDrawer()"><span class="em">🔮</span>未来·政策</a>
+  <a href="#ch-culture" onclick="closeDrawer()"><span class="em">🎬</span>书籍·电影·影像</a>
+  <a href="#section-route" onclick="closeDrawer()"><span class="em">📍</span>Citywalk 路线</a>
+</div>
+
+<!-- ===== 封面 ===== -->
+<section id="cover">
+  <div id="cover-bg"></div>
+  <div id="particles"></div>
+  <div class="wave-layer" id="wave1"><svg viewBox="0 0 1440 260" preserveAspectRatio="none"><path fill="rgba(77,166,184,1)" d="M0,160 C180,120 360,200 540,160 C720,120 900,200 1080,160 C1260,120 1380,180 1440,160 L1440,260 L0,260 Z"/></svg></div>
+  <div class="wave-layer" id="wave2"><svg viewBox="0 0 1440 260" preserveAspectRatio="none"><path fill="rgba(45,106,122,1)" d="M0,180 C200,140 400,220 600,180 C800,140 1000,200 1200,170 C1320,155 1400,185 1440,175 L1440,260 L0,260 Z"/></svg></div>
+  <div class="wave-layer" id="wave3"><svg viewBox="0 0 1440 260" preserveAspectRatio="none"><path fill="rgba(26,58,74,1)" d="M0,200 C240,170 480,230 720,200 C960,170 1200,220 1440,200 L1440,260 L0,260 Z"/></svg></div>
+  <div id="cover-content">
+    <div id="cover-label">SUZHOU CREEK · CITYWALK · 2026</div>
+    <div id="cover-title-zh">苏州河</div>
+    <div id="cover-title-en">CITYWALK GUIDE</div>
+    <div id="cover-tagline">一条河与一座城的百年记忆<br>从弄堂童年到生态新生，从船民烟火到码头集市</div>
+    <div id="cover-meta"><span class="meta-tag">全程约 8 公里</span><span class="meta-tag">步行 + 游船 4-5 小时</span><span class="meta-tag">11 大主题</span></div>
+    <div id="cover-scroll-hint">向下滑动探索</div>
+  </div>
+</section>
+
+<!-- 路线概览条 -->
+<div id="route-bar"><div class="route-inner">
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">梦清园</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">M50</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">创享塔</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">天安千树</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">四行仓库</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">苏河湾</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">浙江路桥</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">河滨大楼</div></div><div class="route-arrow">→</div>
+  <div class="route-node"><div class="route-dot"></div><div class="route-name">外白渡桥</div></div>
+</div></div>
+
+<!-- ===== 01 船民·船工：老电影胶片风 ===== -->
+<section class="chapter ch-boat" id="ch-boat">
+  <div class="film-strip-top"><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span></div>
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num" style="color:#c4a35a">CHAPTER 01</div>
+    <span class="chapter-emoji">⛵</span>
+    <h2 class="chapter-title">河上船只 · 船工 · 船民</h2>
+    <p class="chapter-sub">以船为家、以河为生的人们</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="quote-block"><p>"最初的移民，就是船民。"最早划船来上海闯生活的移民，以船为家，主要靠运货营生。一家老小或在河边搭个草棚，就算安顿下来。</p><cite>——苏州河历史记载</cite></div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)"><div class="film-grain"></div>
+      <h3>🚢 "生在水上，死于水上"——水上贫民窟</h3>
+      <p>船民们从清末民初开始在整个苏州河沿线形成了庞大的水上社会——<span class="highlight">住家船密布河道、仅留窄道通行</span>。船的不仅是交通工具，更是家。儿童常被布带拴住以防落水。婴儿的尿布和换洗衣服像"万国旗"一样在船头迎风招展，炊烟从船舱冒出。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)"><div class="film-grain"></div>
+      <h3>⚓ 撑船人的回忆：15吨木船上的童年</h3>
+      <p>一位老船工后人回忆1970年代：家中一艘载货15吨的小木船，全靠摇橹前行。利用涨落潮水流航行——<span class="highlight">涨潮向西、落潮向东</span>，一个潮次约6小时。船上生活惊险不断：弯道行船、桥梁卡船（闷桥）、避让"沪港拖"拖带船队。最恐惧的是"横桥门"——船撞桥桩瞬间倾翻。</p>
+    </div>
+    <div class="quote-block"><p>"苏州河黝黑的河水，曾经载着我们的船，也载着我们一家人的生计，一路走来。"</p><cite>——老船工后人口述</cite></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)"><div class="film-grain"></div>
+      <h3>🌉 苏州河上的13个船渡——从撑篙到电动</h3>
+      <p>1956年5月，<span class="highlight">13个船渡</span>以资产入股方式并入上海市轮渡公司。1958年受闹钟发条启发，职工试制成功<strong>电动渡船</strong>——通过两岸电缆供电、船上有自动收放的绕线盘——改写了靠人工撑篙摇橹的历史。</p>
+      <p style="margin-top:8px"><strong>最后消失的渡口：强家角船渡，1997年12月16日上午9点30分关闭。</strong>今日桥南堍刻有"苏州河上最后的渡口"一景。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.25s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)"><div class="film-grain"></div>
+      <h3>"一边天堂，一边地狱"（1926年）</h3>
+      <p>1926年的老照片记录了苏州河船民极端贫困的生活。他们住在破旧木船上，饮用水直接从污染的苏州河汲取，霍乱等疫病常年流行。<span class="highlight">对岸租界区的高楼华厦与他们只隔一条河，却如同两个世界。</span>一些船民将报废木船搬上岸，改建为棚屋（"滚地龙"）：几根毛竹片弯成弓形插进地里，盖上芦席搭成棚。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.3s">
+    <div class="stats-grid">
+      <div class="stat-card" style="background:#2a1a08;color:#d4c0a0"><div class="stat-num" style="color:#f0d060">13</div><div class="stat-label">个船渡 / 1956年<br>并入市轮渡公司</div></div>
+      <div class="stat-card" style="background:#2a1a08;color:#d4c0a0"><div class="stat-num" style="color:#f0d060">1997</div><div class="stat-label">最后渡口关闭<br>强家角船渡</div></div>
+      <div class="stat-card" style="background:#2a1a08;color:#d4c0a0"><div class="stat-num" style="color:#f0d060">15吨</div><div class="stat-label">小木船载货量<br>风雨无阻</div></div>
+    </div>
+  </div>
+  <div class="film-strip-bottom" style="height:18px;background:#0a0703;display:flex;align-items:center;justify-content:space-around;padding:0 8px;margin:0 -20px;margin-top:30px;"><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span><span class="film-hole"></span></div>
+</section>
+
+<!-- ===== 02 码头·集市：旧报纸风 ===== -->
+<section class="chapter ch-market" id="ch-market">
+  <div class="newspaper-watermark">苏州河</div>
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 02</div>
+    <span class="chapter-emoji">🏪</span>
+    <h2 class="chapter-title">沿河市场 · 码头集市</h2>
+    <p class="chapter-sub">从"沪西小上海"到苏河湾万象天地</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🏗️ 码头：城市市场的源头</h3>
+      <p>苏州河作为水运大动脉，沿岸分布着数十个专业码头——<span class="highlight">垃圾码头、粪码头、粮米柴草码头、工厂专用码头</span>——码头是沿岸市场的源头。"三湾一弄"最早的居民大多是码头工人；抗战时期大批从江浙坐船来的贫民在码头附近登陆，在棚户区安家立命。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <table class="data-table">
+      <tr><th>市场/码头</th><th>时期</th><th>历史地位</th></tr>
+      <tr><td><strong>曹家渡</strong></td><td>明代万历 → 20世纪</td><td>"沪西小上海"，100+商场商店，三区交汇商业中心</td></tr>
+      <tr><td><strong>三官堂桥禽蛋市场</strong></td><td>1982 → 2000s</td><td>活禽成交量占上海全市区 50%～80%，"半壁江山"</td></tr>
+      <tr><td><strong>浙江路桥（老垃圾桥）</strong></td><td>清末 → 今</td><td>桥堍设垃圾码头得名，同时也是跳水圣地</td></tr>
+      <tr><td><strong>西藏路桥（新垃圾桥）</strong></td><td>清末 → 今</td><td>桥堍设垃圾码头得名</td></tr>
+    </table>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🏮 曹家渡：从渡口到"沪西小上海"</h3>
+      <p>曹家渡得名于明代万历年间曹氏家族在吴淞江设立的义渡。清末民初，随着沿岸码头兴建，农民商贩载运粮米、柴草等物在此集散，酒楼、茶肆、商号随之兴起。到20世纪，拥有<span class="highlight">100多家商场商店、小商品市场、旧货市场、农副产品市场</span>，至今仍是静安、普陀、长宁三区交汇的商业中心。</p>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🐔 三官堂桥禽蛋市场（1982-2000s）</h3>
+      <p>1986年活禽成交量<span class="highlight">500余万只</span>，占上海全市区集市活禽成交量的<span class="highlight">50%</span>；90年代最高占到80%——名副其实的上海禽蛋交易"半壁江山"。来源自清代曹家渡的百年市集传统，紧贴曹杨路桥（三官堂桥）北堍，是典型的"桥市"。电影《大桥下面》在此取景。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.25s">
+    <div class="quote-block"><p>"粪车是我们的报晓鸡，多少人儿跟着它起"</p><cite>——上世纪流行歌曲，真实还原苏州河畔棚户区生活</cite></div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>✨ 新世代：苏河湾·创享塔·88部落</h3>
+      <p>今天的苏州河市集已脱胎换骨——<span class="highlight">苏河湾万象天地</span>集Z世代消费、宠物友好、米其林餐饮于一体；<span class="highlight">创享塔</span>（宝成纱厂旧址1918）转型为文创市集+屋顶花园；<span class="highlight">"88部落"苏河市集</span>以文创手工、美食餐车、草坪音乐打造滨水夜经济。苏州河游船8座码头串联5区27桥，激活沿岸商业。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 03 啤酒·工业遗产：工业厂房风 ===== -->
+<section class="chapter ch-industry" id="ch-industry">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 03</div>
+    <span class="chapter-emoji">🍺</span>
+    <h2 class="chapter-title">啤酒 · 工业遗产 · 厂房</h2>
+    <p class="chapter-sub">苏州河畔的"上海制造"</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🏭 中国最早的啤酒厂（1911年）</h3>
+      <p>德商在江宁路（苏州河畔）创立<span class="highlight">联合啤酒股份有限公司</span>——中国最早的啤酒生产厂，年产2000吨，推出"UB"牌啤酒（上海人称"友啤"）。后经挪威商人→英商沙逊接手，1935年在宜昌路购地扩建新厂，请<strong>邬达克</strong>设计，成为远东最大啤酒厂。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <table class="data-table">
+      <tr><th>项目</th><th>详情</th></tr>
+      <tr><td>📐 设计师</td><td><strong>邬达克</strong>（Art Deco 工业风格）</td></tr>
+      <tr><td>🏗️ 建筑高度</td><td>48.89 米 · 9层钢筋混凝土 · 马蹄形平面</td></tr>
+      <tr><td>📦 产量</td><td>年产 40 万箱</td></tr>
+      <tr><td>🏛️ 现状</td><td>灌装车间→<strong>梦清馆</strong>（苏州河展示馆）</td></tr>
+    </table>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="tag-list">
+      <span class="tag">M50 · 信和纱厂 1917</span>
+      <span class="tag">天安千树 · 福新面粉厂</span>
+      <span class="tag">创享塔 · 宝成纱厂 1918</span>
+      <span class="tag">上海造币厂</span>
+      <span class="tag">阜丰面粉厂</span>
+      <span class="tag">怡和纱厂</span>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🎨 M50：从纺织记忆到当代艺术</h3>
+      <p>M50创意园前身是信和纱厂（1917年由徽商周氏创立），是苏州河沿岸保留<span class="highlight">最完整的民族纺织工业园区</span>。保留1937年至今各时期工业建筑近30处，现在是上海最具影响力的当代艺术聚集地之一。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.25s">
+    <div class="quote-block"><p>"邬达克在上海仅有的两座工业建筑——上海啤酒厂酿造楼与灌装楼，几乎因苏河治理被拆除。如今它们以优秀历史建筑的身份重生，成为苏州河畔的工业纪念碑。"</p><cite>——安墨吉建筑规划 · 上海啤酒厂保护更新</cite></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.3s">
+    <div class="stats-grid">
+      <div class="stat-card" style="background:#3a2010;color:#d0c0a0"><div class="stat-num" style="color:#f0c060">1911</div><div class="stat-label">中国最早啤酒厂<br>联合啤酒股份</div></div>
+      <div class="stat-card" style="background:#3a2010;color:#d0c0a0"><div class="stat-num" style="color:#f0c060">1937</div><div class="stat-label">M50建筑群<br>最早厂房年份</div></div>
+      <div class="stat-card" style="background:#3a2010;color:#d0c0a0"><div class="stat-num" style="color:#f0c060">~30</div><div class="stat-label">处各时期<br>保留工业建筑</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 04 游泳·童年·暑假：夏日照相馆风 ===== -->
+<section class="chapter ch-swim" id="ch-swim">
+  <div class="summer-ray"></div>
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 04</div>
+    <span class="chapter-emoji">🏊</span>
+    <h2 class="chapter-title">游泳 · 童年 · 暑假 · 夏日</h2>
+    <p class="chapter-sub">苏州河是几代上海人的天然游泳池</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🌞 "苏州河比游泳池爽多了"</h3>
+      <p>上世纪五六十年代的盛夏，弄堂里的年轻小伙子经常跳进苏州河游泳。游回来后，晚上乘凉时还要大谈在苏州河游泳比游泳池"爽"的体会——这是自小学会游泳之后<span class="highlight">"夏天里特有的享受"</span>。</p>
+    </div>
+    <div class="quote-block">
+      <p>"一到了上海的盛夏时节，弄堂里和我年龄相仿的年轻小伙子，经常跳进苏州河里去游泳。"</p>
+      <cite>——叶辛《苏州河畔》</cite>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🌉 浙江路桥——跳水的舞台</h3>
+      <p>浙江路桥（老上海称"垃圾桥"）是跳水圣地。胆大的年轻人爬到桥顶，在上百人注视下纵身一跃——这是那个年代的<span class="highlight">极限运动</span>。</p>
+    </div>
+    <div class="quote-block">
+      <p>"夏天的下午，黄浦江水倒灌进苏州河，不是黑臭的河水，那时还能抓到小鱼小虾。"</p>
+      <cite>——老上海居民口述</cite>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.3s">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">1960s</div><div class="stat-label">尚可游泳的年代</div></div>
+      <div class="stat-card"><div class="stat-num">2000</div><div class="stat-label">基本消除黑臭</div></div>
+      <div class="stat-card"><div class="stat-num">2025</div><div class="stat-label">水上运动常态化</div></div>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🔄 从"能抓到小鱼"到"黑如墨"再到重生</h3>
+      <p>60年代后期，水质急剧恶化。到70-80年代，苏州河全年黑臭，鱼虾绝迹。"经过桥边父母吓小孩：不听话就把你丢下去"。直到2025年苏州河常态化水上运动（赛艇/皮艇/桨板）启动，人终于再次"进入"苏州河。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 05 棚户区·拆迁：旧报纸粗粝版 ===== -->
+<section class="chapter ch-shanty" id="ch-shanty">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 05</div>
+    <span class="chapter-emoji">🏚️</span>
+    <h2 class="chapter-title">原生家庭 · 棚户区 · 拆迁</h2>
+    <p class="chapter-sub">苏州河畔的人间烟火与世纪大迁徙</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🏘️ "两湾一宅"——上海最大棚户区</h3>
+      <p>潘家湾、潭子湾、王家宅（"两湾一宅"），普陀区苏州河北岸，占地49.5公顷，约<span class="highlight">10,500户居民 + 160家企业</span>。绝大多数是解放前逃难到上海的贫苦民众在此自建房屋代代繁衍。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <table class="data-table">
+      <tr><th>生活指标</th><th>实际情况</th></tr>
+      <tr><td>👤 人均居住面积</td><td><strong>不足 4 ㎡</strong></td></tr>
+      <tr><td>🚽 卫生设施</td><td>使用马桶（公共倒粪站）</td></tr>
+      <tr><td>🔥 燃料</td><td>烧煤球炉</td></tr>
+      <tr><td>🚌 交通</td><td>公交车无法到达</td></tr>
+      <tr><td>🏥 医疗</td><td>没有一家医院</td></tr>
+      <tr><td>🛁 洗浴</td><td>没有一个浴室</td></tr>
+    </table>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="quote-block"><p>"房间里放一张钢丝床、一个五斗橱就塞满了，基本没法走路。夏天很多居民拿张躺椅到苏州河边找个地方睡一晚。"</p><cite>——棚户区居民口述</cite></div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>⚡ 1998年：11个月完成10,500户动迁</h3>
+      <p>上海旧改史上<span class="highlight">投资最大、范围最广、人口最密、速度最快</span>四项纪录。仅11个月（1998.8-1999.7），全部动迁完毕，居民赠送锦旗400多面。开创了"政府组织、企业参与、各方面配合"的旧改模式。</p>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🌳 今日：中远两湾城</h3>
+      <p>2006年建成上海内环内最大生态居住区——绿化率40%以上、6公顷中央公园、<span class="highlight">1.85公里苏州河景观岸线</span>。从"从没有一棵树"到"1万平方米绿化"。每年苏州河龙舟赛就在这里的水域举行。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 06 污染·治理：暗黑→清洁渐变 ===== -->
+<section class="chapter ch-pollution" id="ch-pollution">
+  <div class="murk-overlay"></div>
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 06</div>
+    <span class="chapter-emoji">🏭</span>
+    <h2 class="chapter-title">污染 · 治理 · 黑臭三十年</h2>
+    <p class="chapter-sub">一条河的世纪重生</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>从"世界最脏的河"到"绿丝带"</h3>
+      <p>苏州河两岸集聚了纺织、化工、机械等上千家工厂。到1970年代，苏州河市区段<span class="highlight">全年黑臭</span>，鱼虾完全绝迹，成为"世界上最脏的河之一"。四期治理工程历时三十余年，完成了史诗级逆袭。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <div class="timeline">
+      <div class="timeline-item" data-anim><div class="timeline-year">1988年</div><div class="timeline-content">启动合流污水治理一期工程——截流沿线污水，预处理后深水排放长江口。<strong>治理的起点。</strong></div></div>
+      <div class="timeline-item" data-anim style="transition-delay:0.1s"><div class="timeline-year">1998年</div><div class="timeline-content">市政府批准《苏州河环境综合整治方案》（苏一期），目标"2000年底基本消除黑臭"。</div></div>
+      <div class="timeline-item" data-anim style="transition-delay:0.2s"><div class="timeline-year">2000年 🎉</div><div class="timeline-content"><strong>基本消除黑臭！</strong>苏州河与黄浦江交汇处的"黑带"消失。标志性历史事件。</div></div>
+      <div class="timeline-item" data-anim style="transition-delay:0.3s"><div class="timeline-year">2003–2005年</div><div class="timeline-content">苏二期——底泥疏浚、曝气复氧、建设梦清园活水公园。2001年检测到鱼类44种。</div></div>
+      <div class="timeline-item" data-anim style="transition-delay:0.4s"><div class="timeline-year">2007–2011年</div><div class="timeline-content">苏三期——干支流全覆盖治理、防汛墙加固、两岸绿化。</div></div>
+      <div class="timeline-item" data-anim style="transition-delay:0.5s"><div class="timeline-year">2018至今</div><div class="timeline-content">苏四期——打造"一江一河"世界级滨水区。<strong>水质达到Ⅲ类（可游泳标准）。</strong>2019年鱼虾种类恢复至45种，白鹭重返河畔。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 07 洪水·防汛：水文蓝图 ===== -->
+<section class="chapter ch-flood" id="ch-flood">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 07</div>
+    <span class="chapter-emoji">🌊</span>
+    <h2 class="chapter-title">洪水 · 涨潮 · 防汛</h2>
+    <p class="chapter-sub">苏州河的水文性格</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="icon-list">
+      <div class="icon-item"><div class="icon-item-icon">🌊</div><div class="icon-item-text"><strong>感潮河流</strong> — 苏州河通过外白渡桥河口与黄浦江连通，每天两次涨落潮。涨潮时黄浦江水倒灌入苏州河，退潮时泻入黄浦江。吴淞口潮汐直接决定苏州河水位。</div></div>
+      <div class="icon-item"><div class="icon-item-icon">🚧</div><div class="icon-item-text"><strong>苏州河口水闸</strong> — 当黄浦江出现高水位时关闭闸门，防止江水倒灌。2009年以新建隐形河口水闸替代旧闸桥。</div></div>
+      <div class="icon-item"><div class="icon-item-icon">⚙️</div><div class="icon-item-text"><strong>苏州河深层排水隧道</strong> — 地下50-60米深处，全长约15公里的超级工程。建成后最高水位可再降低0.26-0.55米，彻底解决中心城区内涝风险。</div></div>
+      <div class="icon-item"><div class="icon-item-icon">🗺️</div><div class="icon-item-text"><strong>苏州河洪水风险图</strong> — 2025-2026年已投入使用，配合每年台风季防汛预警。每逢台风，社交媒体上都会出现苏州河水位上涨的照片。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 08 自然·生态：生机绿 ===== -->
+<section class="chapter ch-nature" id="ch-nature">
+  <span class="leaf-float" style="top:60px;left:10%;animation-delay:0s">🌿</span>
+  <span class="leaf-float" style="top:200px;right:8%;animation-delay:3s">🍃</span>
+  <span class="leaf-float" style="top:400px;left:5%;animation-delay:6s">🌱</span>
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 08</div>
+    <span class="chapter-emoji">🌿</span>
+    <h2 class="chapter-title">自然 · 生态 · 回归</h2>
+    <p class="chapter-sub">从"没有鱼虾"到白鹭飞舞</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">8.6<span style="font-size:16px">公顷</span></div><div class="stat-label">梦清园面积<br>三面环水</div></div>
+      <div class="stat-card"><div class="stat-num">45<span style="font-size:16px">种</span></div><div class="stat-label">鱼类回归<br>2019年数据</div></div>
+      <div class="stat-card"><div class="stat-num">22<span style="font-size:16px">届</span></div><div class="stat-label">苏州河龙舟赛<br>年度盛事</div></div>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🐟 梦清园：苏州河畔最大的活水公园</h3>
+      <p>位于普陀区宜昌路，2004年建成。动迁居民754户、搬迁企业18家、投资超5亿。苏州河水被引入园内，经芦苇荡生态过滤→螺蛳鱼虾湖塘沉淀→分流为景观水体→再回流入河，<span class="highlight">全程自然循环</span>。</p>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🐠 大鱼岛：苏州河上第一座人工岛</h3>
+      <p>梦清园内面积近3,000平方米的人工岛——外形像一条在河中游弋的鱼，是苏州河上的第一大岛，小朋友最喜欢的自然探索空间。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🚣 水上运动回归（2025）</h3>
+      <p>2025年9月起，苏州河常态化水上运动启动——长风公园至丹巴路码头段试点开放<span class="highlight">赛艇、皮艇、桨板、龙舟</span>。人们终于可以再次"进入"苏州河。</p>
+    </div>
+    <div class="quote-block"><p>"现在的恢复还处于初级阶段，距离健康的生态系统仍然任重道远。"</p><cite>——华东师大生态学教授</cite></div>
+  </div>
+</section>
+
+<!-- ===== 09 未来·政策：现代展望 ===== -->
+<section class="chapter ch-future" id="ch-future">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 09</div>
+    <span class="chapter-emoji">🔮</span>
+    <h2 class="chapter-title">未来 · 政策变迁 · 发展策略</h2>
+    <p class="chapter-sub">苏州河的"十四五"与2035远景</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>📋 新一轮"一江一河"专项规划（2025-2035）</h3>
+      <p>2025年3月发布，上海市人民政府批复。苏州河两岸全长约66公里，向西拓展衔接大虹桥地区。目标：打造具有<span class="highlight">典型上海人文风情、苏河风光特征、历史风貌特色</span>的世界级滨水区。</p>
+    </div>
+    <div class="story-card ripple-container" onclick="addRipple(event,this)">
+      <h3>🚢 游船复航 · 8码头串联5区27桥</h3>
+      <p>苏州河游船（2022.9正式复航）目前设<span class="highlight">8座码头、横跨5区、穿越27座桥</span>。"十五五"期间新建游船码头，提升水上观光体验。</p>
+    </div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.2s">
+    <div class="icon-list">
+      <div class="icon-item"><div class="icon-item-icon">🏭→🌿</div><div class="icon-item-text"><strong>工业锈带 → 生活秀带</strong>：搬工厂、拆棚户→建绿地、通步道、引文创。苏州河畔的城市更新被视为上海乃至中国超大城市的典范。</div></div>
+      <div class="icon-item"><div class="icon-item-icon">📐</div><div class="icon-item-text"><strong>渐进主义治理哲学</strong>：截污（一期）→ 疏浚+曝气（二期）→ 干支流全覆盖（三期）→ 滨水空间贯通+品质提升（四期），这是苏州河起死回生的制度密码。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 10 书籍·电影·影像：画廊/影院风 ===== -->
+<section class="chapter ch-culture" id="ch-culture">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">CHAPTER 10</div>
+    <span class="chapter-emoji">🎬</span>
+    <h2 class="chapter-title">书籍 · 电影 · 影像作品</h2>
+    <p class="chapter-sub">文学与镜头里的苏州河</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.1s">
+    <div class="quote-block"><p>"太阳刚刚下了地平线。软风一阵一阵地吹上人面，怪痒痒的。苏州河的浊水幻成了金绿色，轻轻地，悄悄地，向西流去。"</p><cite>——茅盾《子夜》开篇，1933年 · 近百年来描写苏州河最经典的文学片段</cite></div>
+  </div>
+
+  <div class="content-block" data-anim style="transition-delay:0.15s">
+    <div class="media-grid">
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#f0e6d0,#e8d8b8)">📖</div><div class="media-card-body"><div class="media-card-type" style="color:#c4a35a">小说</div><div class="media-card-title">童年河</div><div class="media-card-author">赵丽宏 · 2013</div><div class="media-card-desc">主人公雪弟在苏州河边结识伙伴、见证人间悲欢。出版12年，是赵丽宏结识读者最多的一本书。</div></div></div>
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#d4e8f0,#b8d8e8)">📚</div><div class="media-card-body"><div class="media-card-type" style="color:#6aaab8">茅盾文学奖</div><div class="media-card-title">繁花</div><div class="media-card-author">金宇澄</div><div class="media-card-desc">"黄浦江代表宏大叙事，苏州河代表市井烟火。"爷叔金句成为文化符号。</div></div></div>
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#2d3a4a,#1a2a3a)">📷</div><div class="media-card-body"><div class="media-card-type" style="color:#8ab8c8">摄影集</div><div class="media-card-title">苏州河</div><div class="media-card-author">陆元敏 · 1991-1993</div><div class="media-card-desc">146张黑白照片，河水还黑、两岸还是棚户区的年代。2023年再版。</div></div></div>
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#4a3a2a,#6a4a3a)">🎞️</div><div class="media-card-body"><div class="media-card-type" style="color:#c47a2b">电影</div><div class="media-card-title">苏州河</div><div class="media-card-author">娄烨 · 2000</div><div class="media-card-desc">周迅、贾宏声主演。鹿特丹电影节老虎奖。"如果有一天我走了，你会像马达一样找我吗？"</div></div></div>
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#e8f0d0,#d0e8b8)">📺</div><div class="media-card-body"><div class="media-card-type" style="color:#5a8c6e">纪录片</div><div class="media-card-title">艺术苏河</div><div class="media-card-author">2024 · 两季</div><div class="media-card-desc">通过建筑师、艺术家、老居民的讲述+珍贵历史影像。Citywalk前必看。</div></div></div>
+      <div class="media-card"><div class="media-card-header" style="background:linear-gradient(135deg,#f0d4c8,#e8b8a8)">✍️</div><div class="media-card-body"><div class="media-card-type" style="color:#a06040">经典文学</div><div class="media-card-title">子夜</div><div class="media-card-author">茅盾 · 1933</div><div class="media-card-desc">开篇黄浦江与苏州河的传世描写，被认为是最经典的文学片段。</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 路线速查 ===== -->
+<section id="section-route">
+  <div class="chapter-header" data-anim style="max-width:680px;margin:0 auto 30px">
+    <div class="chapter-num">CITYWALK ROUTE</div>
+    <span class="chapter-emoji">📍</span>
+    <h2 class="chapter-title">Citywalk 路线速查</h2>
+    <p class="chapter-sub">全程约 8 公里 · 步行+游船 4-5 小时</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="route-table-card" data-anim>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">1</div><div class="route-item-info"><div class="route-item-name">🌿 梦清园</div><div class="route-item-theme">治理 / 自然 / 啤酒</div><div class="route-item-desc">活水公园、大鱼岛、上海啤酒厂旧址（邬达克设计）</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">2</div><div class="route-item-info"><div class="route-item-name">🎨 M50创意园</div><div class="route-item-theme">工业遗产</div><div class="route-item-desc">信和纱厂旧址（1917）、当代艺术聚集地</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">3</div><div class="route-item-info"><div class="route-item-name">🗼 创享塔</div><div class="route-item-theme">工业遗产 / 市集</div><div class="route-item-desc">宝成纱厂旧址（1918）、文创市集、屋顶花园</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">4</div><div class="route-item-info"><div class="route-item-name">🌲 天安千树</div><div class="route-item-theme">工业遗产</div><div class="route-item-desc">福新面粉厂原址、网红建筑</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">5</div><div class="route-item-info"><div class="route-item-name">🏘️ 中远两湾城</div><div class="route-item-theme">拆迁 / 原生家庭</div><div class="route-item-desc">两湾一宅旧址、龙舟赛水域</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">6</div><div class="route-item-info"><div class="route-item-name">🏛️ 四行仓库</div><div class="route-item-theme">历史记忆</div><div class="route-item-desc">抗战纪念地</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">7</div><div class="route-item-info"><div class="route-item-name">🛍️ 苏河湾万象天地</div><div class="route-item-theme">市场 / 市集</div><div class="route-item-desc">Z世代消费、宠物友好</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">8</div><div class="route-item-info"><div class="route-item-name">🌉 浙江路桥</div><div class="route-item-theme">游泳 / 童年</div><div class="route-item-desc">跳水圣地、"垃圾桥"</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">9</div><div class="route-item-info"><div class="route-item-name">🎬 河滨大楼</div><div class="route-item-theme">电影 / 影像</div><div class="route-item-desc">娄烨《苏州河》取景地</div></div></div>
+    <div class="route-item ripple-container" onclick="addRipple(event,this)"><div class="route-item-num">10</div><div class="route-item-info"><div class="route-item-name">🌊 外白渡桥</div><div class="route-item-theme">河口 / 潮汐</div><div class="route-item-desc">苏州河汇入黄浦江处</div></div></div>
+  </div>
+</section>
+
+<!-- ===== 收集盒：旧时留言簿 + 记忆漂流瓶融合 ===== -->
+<section id="memory-box">
+  <div class="chapter-header" data-anim>
+    <div class="chapter-num">MEMORY BOX</div>
+    <span class="chapter-emoji">📮</span>
+    <h2 class="chapter-title">苏州河 · 记忆收集盒</h2>
+    <p class="chapter-sub">—— 路过这条河的人，在此留下你的联想 ——</p>
+    <div class="chapter-divider"></div>
+  </div>
+
+  <div class="mb-entries" id="mbEntries">
+    <div class="mb-entry"><span class="mb-entry-num">01</span><span class="mb-entry-text">小时候外婆家在苏州河边，夏天能闻到河水的气味。后来河水变清了，外婆也不在了。</span><span class="mb-entry-time">3分钟前</span></div>
+    <div class="mb-entry"><span class="mb-entry-num">02</span><span class="mb-entry-text">看了娄烨的《苏州河》才知道上海有这么一条河。第一次去外白渡桥的时候，脑子里全是马达和牡丹。</span><span class="mb-entry-time" style="opacity:0.7">8分钟前</span></div>
+    <div class="mb-entry"><span class="mb-entry-num">03</span><span class="mb-entry-text">我在M50看了三年的展，每次去都沿着苏州河走。它像上海的一条裂缝，旧的新的都在里面。</span><span class="mb-entry-time" style="opacity:0.5">15分钟前</span></div>
+    <div class="mb-entry"><span class="mb-entry-num">04</span><span class="mb-entry-text">我们家乡也有一条河，小时候在里面游泳摸鱼。后来河被填了变成了马路。苏州河能活过来，真的很不容易。</span><span class="mb-entry-time" style="opacity:0.3">22分钟前</span></div>
+  </div>
+
+  <div class="mb-input-row">
+    <input class="mb-input" id="mbInput" placeholder="写下你和某条河的故事、联想、或一句感受…" maxlength="120">
+    <button class="mb-btn ripple-container" onclick="addMemory()">留 言</button>
+  </div>
+  <div class="mb-river-line"></div>
+</section>
+
+<!-- 页脚 -->
+<footer id="footer">
+  <div id="footer-logo">苏州河</div>
+  <div id="footer-sub">SUZHOU CREEK · CITYWALK · 2026</div>
+  <div id="footer-divider"></div>
+  <div id="footer-info">
+    全长约 53 公里 · 流经长宁、普陀、静安、虹口、黄浦五区<br>
+    从吴淞江到苏州河 · 一条河与一座城的百年记忆<br><br>
+    资料来源：上海市人民政府 · 上海市规划和自然资源局 · 上海市水务局<br>
+    普陀区/长宁区/静安区文旅局及档案局 · 澎湃新闻 · 上观新闻 · 新民周刊<br><br>
+    整理于 2026年6月
+  </div>
+</footer>
+
+<div id="back-top" onclick="scrollToTop()">↑</div>
+
+<script>
+// 粒子
+(function() {const c=document.getElementById('particles');for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';const s=Math.random()*5+2;p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:${Math.random()*30}%;animation-duration:${Math.random()*12+8}s;animation-delay:${Math.random()*8}s;`;c.appendChild(p);}})();
+
+// 导航+进度
+const nav=document.getElementById('nav'),progressBar=document.getElementById('progress-bar'),backTop=document.getElementById('back-top');
+window.addEventListener('scroll',()=>{const s=window.scrollY,m=document.documentElement.scrollHeight-window.innerHeight;progressBar.style.width=(s/m*100)+'%';nav.classList.toggle('visible',s>60);backTop.classList.toggle('show',s>300);});
+
+// 滚动动画
+const animObserver=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('in-view'),(e.target.dataset.delay||0)*1000);}});},{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('[data-anim]').forEach(el=>animObserver.observe(el));
+
+// 目录抽屉
+let drawerOpen=false;
+function toggleDrawer(){drawerOpen=!drawerOpen;document.getElementById('drawer').classList.toggle('open',drawerOpen);}
+function closeDrawer(){drawerOpen=false;document.getElementById('drawer').classList.remove('open');}
+document.addEventListener('click',e=>{if(drawerOpen&&!e.target.closest('#drawer')&&!e.target.closest('#nav-menu-btn'))closeDrawer();});
+
+// 涟漪
+function addRipple(e,el){const r=el.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,ripple=document.createElement('span');ripple.className='ripple';const s=Math.max(r.width,r.height);ripple.style.cssText=`width:${s}px;height:${s}px;left:${x-s/2}px;top:${y-s/2}px;`;el.appendChild(ripple);setTimeout(()=>ripple.remove(),700);}
+
+// 回到顶部
+function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});}
+
+// 收集盒 - 添加记忆
+let memCount=4;
+function addMemory(){
+  const input=document.getElementById('mbInput');
+  const text=input.value.trim();
+  if(!text) return;
+  const container=document.getElementById('mbEntries');
+  memCount++;
+  const now=new Date();
+  const timeStr='刚刚';
+  const entry=document.createElement('div');
+  entry.className='mb-entry';
+  entry.innerHTML=`<span class="mb-entry-num">${String(memCount).padStart(2,'0')}</span><span class="mb-entry-text">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span><span class="mb-entry-time">${timeStr}</span>`;
+  container.appendChild(entry);
+  setTimeout(()=>entry.classList.add('visible'),50);
+  input.value='';
+  entry.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// 收集盒已展示条目入场动画
+const mbObserver=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');mbObserver.unobserve(e.target);}});},{threshold:0.3});
+document.querySelectorAll('.mb-entry').forEach(el=>mbObserver.observe(el));
+</script>
+</body>
+</html>
